@@ -20,7 +20,7 @@ pipeline {
     }
   }
   tools {
-    maven 'Maven 3.9.13'
+    maven 'Maven 3.9.14'
   }
   post {
     always {
