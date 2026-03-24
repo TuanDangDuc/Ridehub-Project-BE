@@ -50,4 +50,3 @@ public class Trip {
     @ManyToOne
     private Station endStation;
 }
-
