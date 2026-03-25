@@ -1,5 +1,6 @@
 package com.tuan.ridehub.controller;
 
+import com.tuan.ridehub.dto.request.LoginDtoRequest;
 import com.tuan.ridehub.dto.request.RegisterDtoRequest;
 import com.tuan.ridehub.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,5 +21,12 @@ public class UserController {
             @RequestBody RegisterDtoRequest request
     ) {
         return userService.register(request);
+    }
+
+    @PostMapping("/login")
+    public String login(
+            @RequestBody LoginDtoRequest request
+    ) {
+        return userService.login(request);
     }
 }
