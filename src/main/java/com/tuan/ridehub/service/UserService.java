@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +27,7 @@ public class UserService {
         if (check != null)
             return "Username or Email already exists";
 
-        userRepository.save(userMapper.toUser(request));
+        userRepository.save(userMapper.RegisterDtoRequestToUser(request));
         return "Register successful";
     }
 

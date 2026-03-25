@@ -26,4 +26,10 @@ public class Pricing {
             cascade = CascadeType.MERGE
     )
     private List<Trip> trips;
+
+    @OneToMany(
+            mappedBy = "pricing",
+            cascade = CascadeType.MERGE
+    )
+    private List<Vehicle> vehicles;
 }

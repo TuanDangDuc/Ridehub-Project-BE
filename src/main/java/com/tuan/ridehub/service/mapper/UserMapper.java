@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class UserMapper {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-    public Users toUser(
+    public Users RegisterDtoRequestToUser(
             RegisterDtoRequest request
     ) {
         return Users.builder()

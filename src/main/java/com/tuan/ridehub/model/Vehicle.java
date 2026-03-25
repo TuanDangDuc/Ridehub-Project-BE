@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.catalina.User;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,4 +35,7 @@ public class Vehicle {
             cascade = CascadeType.MERGE
     )
     private List<Trip> trips;
+
+    @ManyToOne()
+    private Pricing pricing;
 }
