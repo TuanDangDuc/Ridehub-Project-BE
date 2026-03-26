@@ -38,4 +38,7 @@ public class Vehicle {
 
     @ManyToOne()
     private Pricing pricing;
+
+    @ManyToOne
+    private Station station;
 }

@@ -93,4 +93,8 @@ public class PaymentService {
                 .map(paymentMapper::toPaymentResponse)
                 .toList();
     }
+
+    public void deletePayment(UUID id) {
+        paymentRepository.deleteById(id);
+    }
 }

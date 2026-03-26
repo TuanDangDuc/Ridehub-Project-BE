@@ -5,6 +5,7 @@ import com.tuan.ridehub.dto.response.PaymentDtoResponse;
 import com.tuan.ridehub.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<PaymentDtoResponse> createPayment(@RequestBody PaymentDtoRequest request) {
         return ResponseEntity.ok(paymentService.createPayment(request));
@@ -45,5 +47,12 @@ public class PaymentController {
     @GetMapping
     public ResponseEntity<List<PaymentDtoResponse>> getAllPayments() {
         return ResponseEntity.ok(paymentService.getAllPayments());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePayment(@PathVariable UUID id) {
+        paymentService.deletePayment(id);
+        return ResponseEntity.ok().build();
     }
 }

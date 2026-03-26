@@ -34,4 +34,8 @@ public class PricingService {
     public void deleteById(UUID id) {
         pricingRepository.deleteById(id);
     }
+
+    public void updatePricing(UUID id, Double pricing) {
+        pricingRepository.updatePricing(id, pricing);
+    }
 }

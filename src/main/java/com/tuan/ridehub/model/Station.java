@@ -39,4 +39,10 @@ public class Station {
             cascade = CascadeType.MERGE
     )
     private List<Trip> trip2;
+
+    @OneToMany(
+            mappedBy = "station",
+            cascade = CascadeType.MERGE
+    )
+    private List<Vehicle> vehicles;
 }

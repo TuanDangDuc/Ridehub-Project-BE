@@ -6,6 +6,7 @@ import com.tuan.ridehub.dto.response.StationDtoResponse;
 import com.tuan.ridehub.service.StationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class StationController {
     private final StationService stationService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<?> addStation(
             @RequestBody StationDtoRequest request
@@ -37,6 +39,7 @@ public class StationController {
         return stationService.getStationById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping()
     public ResponseEntity<?> updateStation(
             @RequestBody UpdateStationDtoRequest request
@@ -53,6 +56,7 @@ public class StationController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStation(
             @PathVariable UUID id

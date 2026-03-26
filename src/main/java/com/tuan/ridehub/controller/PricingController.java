@@ -5,6 +5,7 @@ import com.tuan.ridehub.dto.response.PricingDtoResponse;
 import com.tuan.ridehub.service.PricingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class PricingController {
     private final PricingService pricingService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping()
     public ResponseEntity<?> addPricing(
             @RequestBody PricingDtoRequest request
@@ -36,6 +38,17 @@ public class PricingController {
         return pricingService.getPricingById(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/pricePerMinutes")
+    public ResponseEntity<?> updatePricing(
+            @PathVariable UUID id,
+            @RequestParam Double pricePerMinutes
+    ) {
+        pricingService.updatePricing(id, pricePerMinutes);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePricing(
             @PathVariable UUID id
