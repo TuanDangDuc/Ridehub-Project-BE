@@ -35,6 +35,15 @@ pipeline {
       }
     }
 
+    stage('trigger deploy') {
+      steps {
+        script {
+          build job: 'Deploy', wait: false
+        }
+
+      }
+    }
+
   }
   tools {
     maven 'Maven 3.9.14'
