@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://ridehub_db:5432/postgres
+    url: jdbc:postgresql://ridehub_db:9092/postgres
     username: postgres
     password: 1234
     driver-class-name: org.postgresql.Driver
