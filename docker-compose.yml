@@ -1,0 +1,31 @@
+services:
+
+  database:
+    image: postgres:16
+    container_name: RIDEHUB_DB_AR
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: ridehub_db
+    ports:
+      - "9092:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    image: ductuanbl2000/be-architecture-app
+    container_name: RIDEHUB_BE_AR
+    restart: always
+    depends_on:
+      - database
+    ports:
+      - "127.0.0.2:8080:8080" environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/ridehub_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234 
+  volumes:
+    postgres_data:
+      
+  networks:
+    ridehub_network:

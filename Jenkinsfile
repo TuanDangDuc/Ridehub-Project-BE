@@ -16,8 +16,34 @@ pipeline {
             sh 'mvn clean package -DskipTests'
           }
         }
+
+        stage('Push image') {
+          steps {
+            script {
+              docker.withRegistry('https://index.docker.io/v1/', 'dockerlogin') {
+                def commitHash = env.GIT_COMMIT.take(7)
+                def dockerImage = docker.build("ductuanbl2000/ridehub-app:${commitHash}", "./")
+                dockerImage.push()
+                dockerImage.push("latest")
+                dockerImage.push("dev")
+              }
+            }
+
+          }
+        }
+
       }
     }
+
+    stage('trigger deploy') {
+      steps {
+        script {
+          build job: 'Deploy', wait: false
+        }
+
+      }
+    }
+
   }
   tools {
     maven 'Maven 3.9.14'
