@@ -60,4 +60,9 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
 
     @Query("select a from Users a where a.id = ?1")
     UserDtopResponse findFirstById(UUID id);
+
+    @Modifying
+    @Transactional
+    @Query("update Users a set a.balance = a.balance + ?2 where a.id = ?1")
+    void addCredit(UUID id, Double amount);
 }

@@ -95,4 +95,8 @@ public class UserService {
     public UserDtopResponse getUserById(UUID id) {
         return userRepository.findFirstById(id);
     }
+
+    public void addCredit(UUID id, Double amount) {
+        userRepository.addCredit(id, amount);
+    }
 }

@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
-
+    private final UserService userService;
     private final PaymentRepository paymentRepository;
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
@@ -59,6 +59,7 @@ public class PaymentService {
         }
 
         payment.setPaymentStatus(PaymentStatus.PAID);
+        userService.addCredit(payment.getUser().getId(), payment.getAmount());
         Payment savedPayment = paymentRepository.save(payment);
         return paymentMapper.toPaymentResponse(savedPayment);
     }

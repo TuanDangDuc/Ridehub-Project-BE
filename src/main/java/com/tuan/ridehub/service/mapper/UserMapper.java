@@ -23,6 +23,7 @@ public class UserMapper {
                 .email(request.getEmail())
                 .role(Role.USER)
                 .status(AccountStatus.ACTIVE)
+                .balance(0.0)
                 .build();
     }
 

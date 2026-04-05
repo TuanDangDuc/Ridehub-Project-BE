@@ -26,7 +26,6 @@ public class Payment {
     private String paymentUrl;
     @Column(columnDefinition = "TEXT")
     private String responseData;
-
     @ManyToOne
     private Users user;
 

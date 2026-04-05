@@ -34,7 +34,7 @@ public class Users extends Account{
     private LocalDateTime createdAt;
     @Enumerated(EnumType.STRING)
     private Role role;
-
+    private Double balance;
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
