@@ -25,9 +25,11 @@ public class PaymentController {
 
     @PostMapping("/sepay-webhook")
     public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload,
-                                          @RequestHeader(value = "Authorization", required = false) String authToken) {
+                                          @RequestHeader(value = "Authorization", required = false) String authToken,
+                                          @RequestHeader org.springframework.http.HttpHeaders headers) {
         if (authToken == null || authToken.isEmpty()) {
             log.error("Missing Authorization header in SePay Webhook request!");
+            log.info("Received Headers: {}", headers);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing Authorization header");
         }
         // SePay usually sends "Bearer <API_KEY>"
