@@ -31,7 +31,7 @@ public class SePayWebhookDto {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SePayOrder {
-        private String id;
+        private Object id;
 
         @JsonProperty("order_id")
         private String orderId;
@@ -40,7 +40,7 @@ public class SePayWebhookDto {
         private String orderStatus;
 
         @JsonProperty("order_currency")
-        private String orderCurrency;
+        private Object orderCurrency;
 
         @JsonProperty("order_amount")
         private String orderAmount;
@@ -52,10 +52,10 @@ public class SePayWebhookDto {
         private Object customData;
 
         @JsonProperty("user_agent")
-        private String userAgent;
+        private Object userAgent;
 
         @JsonProperty("ip_address")
-        private String ipAddress;
+        private Object ipAddress;
 
         @JsonProperty("order_description")
         private String orderDescription;
@@ -66,7 +66,7 @@ public class SePayWebhookDto {
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SePayTransaction {
-        private String id;
+        private Object id;
 
         @JsonProperty("payment_method")
         private String paymentMethod;
@@ -75,10 +75,10 @@ public class SePayWebhookDto {
         private String transactionId;
 
         @JsonProperty("transaction_type")
-        private String transactionType;
+        private Object transactionType;
 
         @JsonProperty("transaction_date")
-        private String transactionDate;
+        private Object transactionDate;
 
         @JsonProperty("transaction_status")
         private String transactionStatus;
@@ -87,24 +87,24 @@ public class SePayWebhookDto {
         private String transactionAmount;
 
         @JsonProperty("transaction_currency")
-        private String transactionCurrency;
+        private Object transactionCurrency;
 
         @JsonProperty("authentication_status")
-        private String authenticationStatus;
+        private Object authenticationStatus;
 
         @JsonProperty("card_number")
-        private String cardNumber;
+        private Object cardNumber;
 
         @JsonProperty("card_holder_name")
-        private String cardHolderName;
+        private Object cardHolderName;
 
         @JsonProperty("card_expiry")
-        private String cardExpiry;
+        private Object cardExpiry;
 
         @JsonProperty("card_funding_method")
-        private String cardFundingMethod;
+        private Object cardFundingMethod;
 
         @JsonProperty("card_brand")
-        private String cardBrand;
+        private Object cardBrand;
     }
 }
