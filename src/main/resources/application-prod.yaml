@@ -15,3 +15,6 @@ spring:
           json_format_mapper: jackson
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+sepay:
+  webhook-secret: spsk_test_KNxuWVYza1boa8BW3cqLsrn8HN27FCw8

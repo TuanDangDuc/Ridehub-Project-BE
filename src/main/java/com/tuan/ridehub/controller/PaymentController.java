@@ -17,6 +17,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/payment")
+@lombok.extern.slf4j.Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -24,7 +25,11 @@ public class PaymentController {
 
     @PostMapping("/sepay-webhook")
     public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload,
-                                          @RequestHeader("Authorization") String authToken) {
+                                          @RequestHeader(value = "Authorization", required = false) String authToken) {
+        if (authToken == null || authToken.isEmpty()) {
+            log.error("Missing Authorization header in SePay Webhook request!");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing Authorization header");
+        }
         // SePay usually sends "Bearer <API_KEY>"
         String token = authToken.replace("Bearer ", "");
         if (!sePayService.verifyToken(token)) {
