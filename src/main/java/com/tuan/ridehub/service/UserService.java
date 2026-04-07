@@ -99,4 +99,8 @@ public class UserService {
     public void addCredit(UUID id, Double amount) {
         userRepository.addCredit(id, amount);
     }
+
+    public void subtractCredit(UUID id, Double amount) {
+        userRepository.subtractCredit(id, amount);
+    }
 }

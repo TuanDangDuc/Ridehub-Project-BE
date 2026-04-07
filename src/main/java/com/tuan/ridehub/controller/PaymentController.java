@@ -2,8 +2,11 @@ package com.tuan.ridehub.controller;
 
 import com.tuan.ridehub.dto.request.PaymentDtoRequest;
 import com.tuan.ridehub.dto.response.PaymentDtoResponse;
+import com.tuan.ridehub.dto.request.SePayWebhookDto;
 import com.tuan.ridehub.service.PaymentService;
+import com.tuan.ridehub.service.SePayService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +20,25 @@ import java.util.UUID;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final SePayService sePayService;
+
+    @PostMapping("/sepay-webhook")
+    public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload,
+                                          @RequestHeader("Authorization") String authToken) {
+        // SePay usually sends "Bearer <API_KEY>"
+        String token = authToken.replace("Bearer ", "");
+        if (!sePayService.verifyToken(token)) {
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        sePayService.processWebhook(payload);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/pay-with-balance/{tripId}")
+    public ResponseEntity<PaymentDtoResponse> payWithBalance(@PathVariable UUID tripId,
+                                                           @RequestParam UUID userId) {
+        return ResponseEntity.ok(paymentService.payTripWithBalance(tripId, userId));
+    }
 
 
     @PostMapping("/create")

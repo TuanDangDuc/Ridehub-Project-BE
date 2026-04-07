@@ -65,4 +65,9 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     @Transactional
     @Query("update Users a set a.balance = a.balance + ?2 where a.id = ?1")
     void addCredit(UUID id, Double amount);
+
+    @Modifying
+    @Transactional
+    @Query("update Users a set a.balance = a.balance - ?2 where a.id = ?1")
+    void subtractCredit(UUID id, Double amount);
 }

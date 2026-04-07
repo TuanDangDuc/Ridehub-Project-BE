@@ -98,4 +98,32 @@ public class PaymentService {
     public void deletePayment(UUID id) {
         paymentRepository.deleteById(id);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public PaymentDtoResponse payTripWithBalance(UUID tripId, UUID userId) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found"));
+
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Double cost = trip.getTotalCost() != null ? trip.getTotalCost() : 0.0;
+        if (user.getBalance() == null || user.getBalance() < cost) {
+            throw new RuntimeException("Insufficient balance");
+        }
+
+        // Deduct balance
+        userService.subtractCredit(userId, cost);
+
+        // Create Payment
+        Payment payment = paymentMapper.toPayment("BALANCE", cost, user);
+        payment.setPaymentStatus(PaymentStatus.PAID);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // Link context
+        trip.setPayment(savedPayment);
+        tripRepository.save(trip);
+
+        return paymentMapper.toPaymentResponse(savedPayment);
+    }
 }
