@@ -6,7 +6,6 @@ import com.tuan.ridehub.dto.request.SePayWebhookDto;
 import com.tuan.ridehub.service.PaymentService;
 import com.tuan.ridehub.service.SePayService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,30 +23,23 @@ public class PaymentController {
     private final SePayService sePayService;
 
     @PostMapping("/sepay-webhook")
-    public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload,
-                                          @RequestHeader(value = "Authorization", required = false) String authToken,
-                                          @RequestHeader org.springframework.http.HttpHeaders headers) {
-        if (authToken == null || authToken.isEmpty()) {
-            log.error("Missing Authorization header in SePay Webhook request!");
-            log.info("Received Headers: {}", headers);
-            log.info("Received Body: {}", payload);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing Authorization header");
+    public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
+        log.info("=== SePay IPN Request Received ===");
+        log.info("Payload: {}", payload);
+        try {
+            sePayService.processWebhook(payload);
+            return ResponseEntity.ok().body("{\"success\": true}");
+        } catch (Exception e) {
+            log.error("Error processing SePay webhook: {}", e.getMessage(), e);
+            return ResponseEntity.ok().body("{\"success\": false}");
         }
-        // SePay usually sends "Bearer <API_KEY>"
-        String token = authToken.replace("Bearer ", "");
-        if (!sePayService.verifyToken(token)) {
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        sePayService.processWebhook(payload);
-        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/pay-with-balance/{tripId}")
     public ResponseEntity<PaymentDtoResponse> payWithBalance(@PathVariable UUID tripId,
-                                                           @RequestParam UUID userId) {
+            @RequestParam UUID userId) {
         return ResponseEntity.ok(paymentService.payTripWithBalance(tripId, userId));
     }
-
 
     @PostMapping("/create")
     public ResponseEntity<PaymentDtoResponse> createPayment(@RequestBody PaymentDtoRequest request) {

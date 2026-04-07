@@ -8,7 +8,6 @@ import com.tuan.ridehub.repository.PaymentRepository;
 import com.tuan.ridehub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,51 +24,85 @@ public class SePayService {
     private final PaymentRepository paymentRepository;
     private final UserService userService;
 
-    @Value("${sepay.webhook-secret:sepay_secret_placeholder}")
-    private String sepayWebhookSecret;
-
-    public boolean verifyToken(String authToken) {
-        return sepayWebhookSecret.equals(authToken);
-    }
-
     @Transactional
-    public void processWebhook(SePayWebhookDto status) {
-        log.info("Processing SePay Webhook for transaction: {}", status.getReferenceNumber());
+    public void processWebhook(SePayWebhookDto webhook) {
+        log.info("=== SePay Gateway IPN Received ===");
+        log.info("Notification Type: {}", webhook.getNotificationType());
 
-        // Extract User ID from content (Expected format: HUB <UUID>)
-        UUID userId = extractUserId(status.getContent());
-        if (userId == null) {
-            log.error("Could not extract User ID from content: {}", status.getContent());
+        if (!"ORDER_PAID".equals(webhook.getNotificationType())) {
+            log.warn("Ignoring notification type: {}", webhook.getNotificationType());
             return;
         }
 
-        Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        SePayWebhookDto.SePayOrder order = webhook.getOrder();
+        SePayWebhookDto.SePayTransaction transaction = webhook.getTransaction();
+
+        if (order == null || transaction == null) {
+            log.error("Missing order or transaction data in webhook!");
+            return;
+        }
+
+        log.info("Order ID: {}, Invoice: {}, Amount: {}, Status: {}",
+                order.getOrderId(), order.getOrderInvoiceNumber(),
+                order.getOrderAmount(), order.getOrderStatus());
+        log.info("Transaction ID: {}, Status: {}, Method: {}",
+                transaction.getTransactionId(), transaction.getTransactionStatus(),
+                transaction.getPaymentMethod());
+
+        // Parse amount
+        Double amount;
+        try {
+            amount = Double.parseDouble(order.getOrderAmount());
+        } catch (NumberFormatException e) {
+            log.error("Invalid order amount: {}", order.getOrderAmount());
+            return;
+        }
+
+        // Extract User ID from order_description or order_invoice_number
+        // Expected format in description: "NAP CREDIT <UUID>"
+        // Or invoice number contains UUID
+        UUID userId = extractUserId(order.getOrderDescription());
+        if (userId == null) {
+            userId = extractUserId(order.getOrderInvoiceNumber());
+        }
+
+        if (userId == null) {
+            log.error("Could not extract User ID from order description: '{}' or invoice: '{}'",
+                    order.getOrderDescription(), order.getOrderInvoiceNumber());
+            return;
+        }
+
+        Users user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.error("User not found with ID: {}", userId);
+            return;
+        }
 
         // Create Payment record
         Payment payment = Payment.builder()
-                .amount(status.getAmount())
-                .paymentMethod("SEPAY_BANK_TRANSFER")
+                .amount(amount)
+                .paymentMethod("SEPAY_" + (transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "UNKNOWN"))
                 .paymentStatus(PaymentStatus.PAID)
                 .user(user)
-                .responseData(status.toString()) // Store full payload for audit
+                .responseData(webhook.toString())
                 .build();
 
         paymentRepository.save(payment);
 
-        // Update user credit
-        userService.addCredit(userId, status.getAmount());
-        log.info("Successfully added {} credit to user {}", status.getAmount(), userId);
+        // Add credit to user balance
+        userService.addCredit(userId, amount);
+        log.info("Successfully added {} credit to user {} ({})", amount, userId, user.getUsername());
     }
 
-    private UUID extractUserId(String content) {
-        if (content == null) return null;
-        
-        // Simple regex to find UUID in content
-        // Adjust prefix if needed (e.g., HUB)
-        Pattern pattern = Pattern.compile("([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})", Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(content);
-        
+    private UUID extractUserId(String text) {
+        if (text == null) return null;
+
+        // Find UUID pattern in text
+        Pattern pattern = Pattern.compile(
+                "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})",
+                Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(text);
+
         if (matcher.find()) {
             try {
                 return UUID.fromString(matcher.group(1));
