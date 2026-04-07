@@ -30,6 +30,7 @@ public class PaymentController {
         if (authToken == null || authToken.isEmpty()) {
             log.error("Missing Authorization header in SePay Webhook request!");
             log.info("Received Headers: {}", headers);
+            log.info("Received Body: {}", payload);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing Authorization header");
         }
         // SePay usually sends "Bearer <API_KEY>"
