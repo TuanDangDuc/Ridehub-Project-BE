@@ -8,6 +8,7 @@ import com.tuan.ridehub.repository.PaymentRepository;
 import com.tuan.ridehub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,51 +25,38 @@ public class SePayService {
     private final PaymentRepository paymentRepository;
     private final UserService userService;
 
+    @Value("${sepay.webhook-secret}")
+    private String webhookSecret;
+
     @Transactional
     public void processWebhook(SePayWebhookDto webhook) {
-        log.info("=== SePay Gateway IPN Received ===");
-        log.info("Notification Type: {}", webhook.getNotificationType());
+        log.info("=== SePay Bank Webhook Received ===");
+        log.info("ID: {}, Gateway: {}, Amount: {}, Content: {}",
+                webhook.getId(), webhook.getGateway(),
+                webhook.getTransferAmount(), webhook.getContent());
+        log.info("Transfer Type: {}, Ref: {}, Account: {}",
+                webhook.getTransferType(), webhook.getReferenceCode(),
+                webhook.getAccountNumber());
 
-        if (!"ORDER_PAID".equals(webhook.getNotificationType())) {
-            log.warn("Ignoring notification type: {}", webhook.getNotificationType());
+        // Only process incoming transfers
+        if (!"in".equals(webhook.getTransferType())) {
+            log.warn("Ignoring non-incoming transfer type: {}", webhook.getTransferType());
             return;
         }
 
-        SePayWebhookDto.SePayOrder order = webhook.getOrder();
-        SePayWebhookDto.SePayTransaction transaction = webhook.getTransaction();
-
-        if (order == null || transaction == null) {
-            log.error("Missing order or transaction data in webhook!");
+        if (webhook.getTransferAmount() == null || webhook.getTransferAmount() <= 0) {
+            log.error("Invalid transfer amount: {}", webhook.getTransferAmount());
             return;
         }
 
-        log.info("Order ID: {}, Invoice: {}, Amount: {}, Status: {}",
-                order.getOrderId(), order.getOrderInvoiceNumber(),
-                order.getOrderAmount(), order.getOrderStatus());
-        log.info("Transaction ID: {}, Status: {}, Method: {}",
-                transaction.getTransactionId(), transaction.getTransactionStatus(),
-                transaction.getPaymentMethod());
+        Double amount = webhook.getTransferAmount().doubleValue();
 
-        // Parse amount
-        Double amount;
-        try {
-            amount = Double.parseDouble(order.getOrderAmount());
-        } catch (NumberFormatException e) {
-            log.error("Invalid order amount: {}", order.getOrderAmount());
-            return;
-        }
-
-        // Extract User ID from order_description or order_invoice_number
-        // Expected format in description: "NAP CREDIT <UUID>"
-        // Or invoice number contains UUID
-        UUID userId = extractUserId(order.getOrderDescription());
-        if (userId == null) {
-            userId = extractUserId(order.getOrderInvoiceNumber());
-        }
+        // Extract User UUID from the transfer content
+        // Expected format: "NAP CREDIT <UUID>" or content containing a UUID
+        UUID userId = extractUserId(webhook.getContent());
 
         if (userId == null) {
-            log.error("Could not extract User ID from order description: '{}' or invoice: '{}'",
-                    order.getOrderDescription(), order.getOrderInvoiceNumber());
+            log.error("Could not extract User ID from content: '{}'", webhook.getContent());
             return;
         }
 
@@ -81,10 +69,10 @@ public class SePayService {
         // Create Payment record
         Payment payment = Payment.builder()
                 .amount(amount)
-                .paymentMethod("SEPAY_" + (transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "UNKNOWN"))
+                .paymentMethod("SEPAY_" + (webhook.getGateway() != null ? webhook.getGateway() : "UNKNOWN"))
                 .paymentStatus(PaymentStatus.PAID)
                 .user(user)
-                .responseData(webhook.toString())
+                .responseData("ref=" + webhook.getReferenceCode() + ", txDate=" + webhook.getTransactionDate())
                 .build();
 
         paymentRepository.save(payment);
