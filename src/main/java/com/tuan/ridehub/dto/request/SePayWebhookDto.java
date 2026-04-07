@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+
 
 @Data
 @Builder
@@ -49,7 +49,7 @@ public class SePayWebhookDto {
         private String orderInvoiceNumber;
 
         @JsonProperty("custom_data")
-        private List<Object> customData;
+        private Object customData;
 
         @JsonProperty("user_agent")
         private String userAgent;
