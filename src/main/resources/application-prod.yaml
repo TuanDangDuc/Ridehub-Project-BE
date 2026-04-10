@@ -32,3 +32,6 @@ logging:
     org.springframework.security: DEBUG
 sepay:
   webhook-secret: ${SEPAY_WEBHOOK_SECRET}
+
+server:
+  forward-headers-strategy: framework
