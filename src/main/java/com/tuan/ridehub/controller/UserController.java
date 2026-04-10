@@ -7,6 +7,7 @@ import com.tuan.ridehub.dto.request.UpdateUserDtoRequest;
 import com.tuan.ridehub.dto.response.UserDtopResponse;
 import com.tuan.ridehub.enums.AccountStatus;
 import com.tuan.ridehub.enums.Role;
+import com.tuan.ridehub.service.AuthService;
 import com.tuan.ridehub.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/user")
 public class UserController {
     private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public String register(
@@ -35,9 +37,10 @@ public class UserController {
     public String login(
             @RequestBody LoginDtoRequest request
     ) {
-        return userService.login(request);
+        return authService.login(request);
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping
     public ResponseEntity<?> updateUserInfo(
         @RequestBody UpdateUserDtoRequest request
@@ -66,6 +69,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PatchMapping
     public ResponseEntity<?> changePassword(
             @RequestBody ChangePasswordDtoRequest request
@@ -74,6 +78,7 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?>  delete(
             @PathVariable UUID id
@@ -88,6 +93,7 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public UserDtopResponse getUserById(
             @PathVariable UUID id

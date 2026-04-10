@@ -22,6 +22,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final SePayService sePayService;
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/sepay-webhook")
     public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
         log.info("=== SePay IPN Request Received ===");
@@ -35,37 +36,43 @@ public class PaymentController {
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/pay-with-balance/{tripId}")
     public ResponseEntity<PaymentDtoResponse> payWithBalance(@PathVariable UUID tripId,
             @RequestParam UUID userId) {
         return ResponseEntity.ok(paymentService.payTripWithBalance(tripId, userId));
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/create")
     public ResponseEntity<PaymentDtoResponse> createPayment(@RequestBody PaymentDtoRequest request) {
         return ResponseEntity.ok(paymentService.createPayment(request));
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/process")
     public ResponseEntity<PaymentDtoResponse> processPayment(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.processPayment(id));
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/fail")
     public ResponseEntity<PaymentDtoResponse> failPayment(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.failPayment(id));
     }
-
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public ResponseEntity<PaymentDtoResponse> getPaymentById(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PaymentDtoResponse>> getPaymentsByUserId(@PathVariable UUID userId) {
         return ResponseEntity.ok(paymentService.getPaymentsByUserId(userId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<PaymentDtoResponse>> getAllPayments() {
         return ResponseEntity.ok(paymentService.getAllPayments());

@@ -29,11 +29,13 @@ public class VehicleController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping
     public List<VehicleDtoResponse> getAllVehicles() {
         return vehicleService.getAll();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public VehicleDtoResponse getVehicleById(
             @PathVariable UUID id
@@ -41,6 +43,7 @@ public class VehicleController {
         return vehicleService.getVehicleById(id);
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping
     public ResponseEntity<?> updateVehicle(
             @RequestBody UpdateVehicleDtoRequest request
@@ -49,6 +52,7 @@ public class VehicleController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateVehicle(
             @PathVariable UUID id,
@@ -67,6 +71,7 @@ public class VehicleController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PatchMapping("/{id}/station")
     public ResponseEntity<?> updateVehicleStation(
             @PathVariable UUID id,

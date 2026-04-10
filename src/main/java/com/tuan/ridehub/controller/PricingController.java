@@ -26,11 +26,13 @@ public class PricingController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping()
     public List<PricingDtoResponse> getPricing() {
         return pricingService.getAll();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public PricingDtoResponse getPricing(
             @PathVariable UUID id

@@ -70,4 +70,7 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     @Transactional
     @Query("update Users a set a.balance = a.balance - ?2 where a.id = ?1")
     void subtractCredit(UUID id, Double amount);
+
+    @Query("select a from Users a where a.email = ?1")
+    Users findUsersByEmail(String email);
 }

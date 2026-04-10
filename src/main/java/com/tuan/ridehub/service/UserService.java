@@ -27,35 +27,35 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
+//    private final AuthenticationManager authenticationManager;
+//    private final JwtService jwtService;
 
     public String register(RegisterDtoRequest request) {
-        Users check = userRepository.findUsersByUsername(request.getUsername(), request.getPassword());
+        Users check = userRepository.findUsersByUsername(request.getUsername(), request.getEmail());
         if (check != null)
             return "Username or Email already exists";
 
         userRepository.save(userMapper.RegisterDtoRequestToUser(request));
         return "Register successful";
     }
-
-    public String login(LoginDtoRequest request) {
-        var c = userRepository.findUsersByUsername(request.getUsername());
-        if (c == null || c.getStatus() == AccountStatus.INACTIVE) {
-            throw new RuntimeException("Login failed: User not found or account is banned");
-        }
-
-        Authentication auth = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        try {
-            if (auth.isAuthenticated()) {
-                return jwtService.generateToken((UserPrincipal) Objects.requireNonNull(auth.getPrincipal()));
-            }
-        } catch (Exception e) {
-            return "Login failed: " + e.getMessage() ;
-        }
-        return "Login failed";
-    }
+//
+//    public String login(LoginDtoRequest request) {
+//        var c = userRepository.findUsersByUsername(request.getUsername());
+//        if (c == null || c.getStatus() == AccountStatus.INACTIVE) {
+//            throw new RuntimeException("Login failed: User not found or account is banned");
+//        }
+//
+//        Authentication auth = authenticationManager
+//                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+//        try {
+//            if (auth.isAuthenticated()) {
+//                return jwtService.generateToken((UserPrincipal) Objects.requireNonNull(auth.getPrincipal()));
+//            }
+//        } catch (Exception e) {
+//            return "Login failed: " + e.getMessage() ;
+//        }
+//        return "Login failed";
+//    }
 
     public void delete(UUID id) {
         userRepository.deleteById(id);
@@ -102,5 +102,11 @@ public class UserService {
 
     public void subtractCredit(UUID id, Double amount) {
         userRepository.subtractCredit(id, amount);
+    }
+
+    public Users findUserByEmail(
+            String email
+    ) {
+        return userRepository.findUsersByEmail(email);
     }
 }

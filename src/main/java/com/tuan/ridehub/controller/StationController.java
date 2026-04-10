@@ -27,11 +27,13 @@ public class StationController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping
     public List<StationDtoResponse> getAllStation() {
         return stationService.getAllStation();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public StationDtoResponse getStationById(
             @PathVariable UUID id
@@ -48,6 +50,7 @@ public class StationController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateStation(
             @PathVariable UUID id

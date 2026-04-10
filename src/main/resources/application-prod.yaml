@@ -15,6 +15,20 @@ spring:
           json_format_mapper: jackson
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
 
+logging:
+  level:
+    org.springframework.security: DEBUG
 sepay:
-  webhook-secret: spsk_test_KNxuWVYza1boa8BW3cqLsrn8HN27FCw8
+  webhook-secret: ${SEPAY_WEBHOOK_SECRET}
