@@ -1,6 +1,7 @@
 package com.tuan.ridehub.controller;
 
 import com.tuan.ridehub.service.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +19,11 @@ public class OAuth2Controller {
 
     @GetMapping("/login/google")
     public void loginGoogle(
-            HttpServletResponse httpServletResponse
+            HttpServletResponse httpServletResponse,
+            HttpServletRequest request
     ) throws IOException {
+        System.out.println("Header: " + request.getHeader("X-Forwarded-Proto"));
+        System.out.println("Scheme: " + request.getScheme());
         httpServletResponse.sendRedirect("/oauth2/authorization/google");
     }
 
