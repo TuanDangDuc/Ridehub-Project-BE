@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,4 +36,10 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
     @Transactional
     @Query("update Vehicle v set v.station.id = :stationId where v.id = :id")
     void updateVehicleStation(UUID id, UUID stationId);
+
+    @Query("select v from Vehicle v where v.code = :code")
+    Vehicle getVehiclesByCode(String code);
+
+    @Query("select v from Vehicle v where v.station.id = :stationId")
+    List<Vehicle> getVehicleByStationId(UUID stationId);
 }

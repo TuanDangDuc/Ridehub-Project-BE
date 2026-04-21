@@ -80,4 +80,19 @@ public class VehicleController {
         vehicleService.updateVehicleStation(id, stationId);
         return ResponseEntity.ok().build();
     }
+
+
+    @GetMapping("/{code}")
+    public ResponseEntity<VehicleDtoResponse> getAvailableVehiclesByCode(
+            @PathVariable String code
+    ) {
+        return ResponseEntity.ok(vehicleService.getAvailableVehiclesByCode(code));
+    }
+
+    @GetMapping("{stationId}")
+    public ResponseEntity<List<VehicleDtoResponse>> getAllVehiclesByStationId(
+            @PathVariable UUID stationId
+    ) {
+        return ResponseEntity.ok(vehicleService.getAvailableVehiclesByStationId(stationId));
+    }
 }

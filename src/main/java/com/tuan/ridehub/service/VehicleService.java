@@ -7,6 +7,7 @@ import com.tuan.ridehub.model.Vehicle;
 import com.tuan.ridehub.repository.VehicleRepository;
 import com.tuan.ridehub.service.mapper.VehicleMapper;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -48,5 +49,16 @@ public class VehicleService {
 
     public void updateVehicleStation(UUID id, UUID stationId) {
         vehicleRepository.updateVehicleStation(id, stationId);
+    }
+
+    public VehicleDtoResponse getAvailableVehiclesByCode(String code) {
+        return vehicleMapper.VehicleToVehicleDtoResponse(vehicleRepository.getVehiclesByCode(code));
+    }
+
+    public @Nullable List<VehicleDtoResponse> getAvailableVehiclesByStationId(UUID stationId) {
+        return vehicleRepository.getVehicleByStationId(stationId)
+                .stream()
+                .map(vehicleMapper::VehicleToVehicleDtoResponse)
+                .toList();
     }
 }
