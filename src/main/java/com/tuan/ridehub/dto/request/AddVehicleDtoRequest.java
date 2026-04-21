@@ -19,6 +19,8 @@ public class AddVehicleDtoRequest {
     private String name;
     private String code;
     private Type type;
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
     private UUID pricingId;
     private UUID stationId;
 }

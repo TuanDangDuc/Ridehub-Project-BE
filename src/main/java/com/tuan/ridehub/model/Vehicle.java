@@ -29,6 +29,8 @@ public class Vehicle {
     private VehicleStatus status;
     @Enumerated(EnumType.STRING)
     private Type type;
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
 
     @OneToMany(
             mappedBy = "vehicle",

@@ -14,6 +14,7 @@ public class VehicleDtoResponse {
     private String name;
     private String code;
     private String type;
+    private String imageUrl;
     private VehicleStatus status;
     private Double pricePerMinutes;
     private UUID stationId;

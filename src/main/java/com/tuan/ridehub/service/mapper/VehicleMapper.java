@@ -27,6 +27,7 @@ public class VehicleMapper {
                 .name(request.getName())
                 .code(request.getCode())
                 .type(request.getType())
+                .imageUrl(request.getImageUrl())
                 .status(VehicleStatus.AVAILABLE)
                 .pricing(pricing)
                 .station(station)
@@ -41,6 +42,7 @@ public class VehicleMapper {
                 .name(vehicle.getName())
                 .code(vehicle.getCode())
                 .type(vehicle.getType().toString())
+                .imageUrl(vehicle.getImageUrl())
                 .status(vehicle.getStatus())
                 .pricePerMinutes(vehicle.getPricing().getPricePerMinutes())
                 .stationId(vehicle.getStation().getId())
@@ -56,6 +58,7 @@ public class VehicleMapper {
                 .name(request.getName())
                 .code(request.getCode())
                 .type(request.getType())
+                .imageUrl(request.getImageUrl())
                 .pricing(pricing)
                 .build();
     }
