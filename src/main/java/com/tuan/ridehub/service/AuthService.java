@@ -23,12 +23,12 @@ public class AuthService {
     public String login(LoginDtoRequest request) {
         var c = userRepository.findUsersByUsername(request.getUsername());
         if (c == null || c.getStatus() == AccountStatus.INACTIVE) {
-            throw new RuntimeException("Login failed: User not found or account is banned");
+            return "Login failed: User not found or account is banned";
         }
 
-        Authentication auth = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         try {
+            Authentication auth = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
             if (auth.isAuthenticated()) {
                 return jwtService.generateToken((UserPrincipal) Objects.requireNonNull(auth.getPrincipal()));
             }

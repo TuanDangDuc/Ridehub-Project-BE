@@ -32,8 +32,10 @@ public class TripService {
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
         Station startStation = stationRepository.findById(request.getStartStationId())
                 .orElseThrow(() -> new RuntimeException("Start station not found"));
-        Station endStation = stationRepository.findById(request.getEndStationId())
-                .orElseThrow(() -> new RuntimeException("End station not found"));
+        Station endStation = null;
+        if (request.getEndStationId() != null) {
+            endStation = stationRepository.findById(request.getEndStationId()).orElse(null);
+        }
         Pricing pricing = pricingRepository.findById(request.getPricingId())
                 .orElseThrow(() -> new RuntimeException("Pricing not found"));
 
@@ -45,12 +47,18 @@ public class TripService {
         return tripMapper.toTripResponse(savedTrip);
     }
 
-    public TripDtoResponse endTrip(UUID tripId) {
+    public TripDtoResponse endTrip(UUID tripId, UUID endStationId) {
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
         if (trip.getTripStatus() != TripStatus.ONGOING) {
             throw new RuntimeException("Trip is not ongoing");
+        }
+
+        if (endStationId != null) {
+            Station endStation = stationRepository.findById(endStationId)
+                    .orElseThrow(() -> new RuntimeException("End station not found"));
+            trip.setEndStation(endStation);
         }
 
         trip.setEndTime(LocalDateTime.now());

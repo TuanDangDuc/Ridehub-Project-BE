@@ -26,8 +26,8 @@ public class TripController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/end")
-    public ResponseEntity<TripDtoResponse> endTrip(@PathVariable UUID id) {
-        return ResponseEntity.ok(tripService.endTrip(id));
+    public ResponseEntity<TripDtoResponse> endTrip(@PathVariable UUID id, @RequestParam(required = false) UUID endStationId) {
+        return ResponseEntity.ok(tripService.endTrip(id, endStationId));
     }
 
     @PreAuthorize("hasRole('USER')")

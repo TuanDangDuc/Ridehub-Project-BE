@@ -82,14 +82,14 @@ public class VehicleController {
     }
 
 
-    @GetMapping("/{code}")
+    @GetMapping("/code/{code}")
     public ResponseEntity<VehicleDtoResponse> getAvailableVehiclesByCode(
             @PathVariable String code
     ) {
         return ResponseEntity.ok(vehicleService.getAvailableVehiclesByCode(code));
     }
 
-    @GetMapping("{stationId}")
+    @GetMapping("/station/{stationId}")
     public ResponseEntity<List<VehicleDtoResponse>> getAllVehiclesByStationId(
             @PathVariable UUID stationId
     ) {

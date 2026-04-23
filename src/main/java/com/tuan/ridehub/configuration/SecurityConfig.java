@@ -27,7 +27,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request.requestMatchers(
-                                "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook", "/oauth2/**", "/", "/api/oauth2/**")
+                                "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook", "/oauth2/**", "/", "/api/oauth2/**", "/error")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
