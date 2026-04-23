@@ -26,6 +26,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> request.requestMatchers(
                                 "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook", "/oauth2/**", "/", "/api/oauth2/**", "/error")
                         .permitAll()
@@ -34,6 +35,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .successHandler(oAuth2SuccessHandler))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
