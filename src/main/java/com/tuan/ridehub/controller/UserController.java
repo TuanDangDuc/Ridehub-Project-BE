@@ -101,7 +101,7 @@ public class UserController {
         return userService.getUserById(id);
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/info/{username}")
     public UserDtopResponse getUserByUsername(
             @PathVariable String username
     ) {
