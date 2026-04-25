@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://103.47.225.125:9092/ridehub_db
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        type:
+          json_format_mapper: jackson
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 429881396256-06or683n2hse3ok4dqpind5djp9or5jo.apps.googleusercontent.com
+            client-secret: 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
+            scope: openid, profile, email
+          github:
+            client-id: Ov23liCFMHDJEYumTUaf
+            client-secret: fd83650d7c8578e786d6bd3c84733bee23297919
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+sepay:
+  webhook-secret: spsk_test_KNxuWVYza1boa8BW3cqLsrn8HN27FCw8
