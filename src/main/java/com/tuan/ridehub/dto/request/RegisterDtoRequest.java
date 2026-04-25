@@ -8,6 +8,8 @@ import lombok.extern.jackson.Jacksonized;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Jacksonized
 public class RegisterDtoRequest {
     String username;
