@@ -109,4 +109,8 @@ public class UserService {
     ) {
         return userRepository.findUsersByEmail(email);
     }
+
+    public UserDtopResponse getUserByUsername(String username) {
+        return userMapper.UserToUserDtoResponse(userRepository.getUserByUsername(username));
+    }
 }

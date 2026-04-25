@@ -100,4 +100,11 @@ public class UserController {
     ) {
         return userService.getUserById(id);
     }
+
+    @GetMapping("/info/{username}")
+    public UserDtopResponse getUserByUsername(
+            @PathVariable String username
+    ) {
+        return userService.getUserByUsername(username);
+    }
 }

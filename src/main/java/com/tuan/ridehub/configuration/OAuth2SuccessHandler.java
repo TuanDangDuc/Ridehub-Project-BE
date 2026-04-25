@@ -35,7 +35,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         if (check == null)
             userService.register(
                     RegisterDtoRequest.builder()
-                            .username(user.getAttribute("given_name"))
+                            .username(user.getAttribute("email"))
                             .email(user.getAttribute("email"))
                             .password("oauth2user")
                             .build()
