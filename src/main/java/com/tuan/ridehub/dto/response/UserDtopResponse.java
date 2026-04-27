@@ -32,4 +32,5 @@ public class UserDtopResponse {
     private AccountStatus status;
     @CreationTimestamp
     private LocalDateTime createdAt;
+    private Role role;
 }
