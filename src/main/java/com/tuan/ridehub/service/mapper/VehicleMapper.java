@@ -46,6 +46,7 @@ public class VehicleMapper {
                 .status(vehicle.getStatus())
                 .pricePerMinutes(vehicle.getPricing().getPricePerMinutes())
                 .stationId(vehicle.getStation().getId())
+                .pricingId(vehicle.getPricing().getId())
                 .build();
     }
 

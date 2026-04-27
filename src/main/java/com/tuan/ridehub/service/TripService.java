@@ -3,6 +3,7 @@ package com.tuan.ridehub.service;
 import com.tuan.ridehub.dto.request.TripDtoRequest;
 import com.tuan.ridehub.dto.response.TripDtoResponse;
 import com.tuan.ridehub.enums.TripStatus;
+import com.tuan.ridehub.enums.VehicleStatus;
 import com.tuan.ridehub.model.*;
 import com.tuan.ridehub.repository.*;
 import com.tuan.ridehub.service.mapper.TripMapper;
@@ -43,6 +44,10 @@ public class TripService {
         trip.setStartTime(LocalDateTime.now());
         trip.setTripStatus(TripStatus.ONGOING);
 
+        // Update vehicle status
+        vehicle.setStatus(VehicleStatus.IN_USE);
+        vehicleRepository.save(vehicle);
+
         Trip savedTrip = tripRepository.save(trip);
         return tripMapper.toTripResponse(savedTrip);
     }
@@ -74,6 +79,13 @@ public class TripService {
 
         trip.setTripStatus(TripStatus.COMPLETED);
 
+        // Update vehicle status back to AVAILABLE
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle != null) {
+            vehicle.setStatus(VehicleStatus.AVAILABLE);
+            vehicleRepository.save(vehicle);
+        }
+
         Trip savedTrip = tripRepository.save(trip);
         return tripMapper.toTripResponse(savedTrip);
     }
@@ -88,6 +100,13 @@ public class TripService {
 
         trip.setTripStatus(TripStatus.CANCELLED);
         trip.setEndTime(LocalDateTime.now());
+
+        // Update vehicle status back to AVAILABLE
+        Vehicle vehicle = trip.getVehicle();
+        if (vehicle != null) {
+            vehicle.setStatus(VehicleStatus.AVAILABLE);
+            vehicleRepository.save(vehicle);
+        }
 
         Trip savedTrip = tripRepository.save(trip);
         return tripMapper.toTripResponse(savedTrip);
