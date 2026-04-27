@@ -1,4 +1,5 @@
 package com.tuan.ridehub.service;
+
 import com.tuan.ridehub.dto.request.AddVehicleDtoRequest;
 import com.tuan.ridehub.dto.request.UpdateVehicleDtoRequest;
 import com.tuan.ridehub.dto.response.VehicleDtoResponse;
@@ -18,7 +19,6 @@ import java.util.UUID;
 public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
-
 
     public void addVehicle(AddVehicleDtoRequest request) {
         vehicleRepository.save(vehicleMapper.AddVehicleDtoRequestToVehicle(request));

@@ -18,4 +18,5 @@ public class VehicleDtoResponse {
     private VehicleStatus status;
     private Double pricePerMinutes;
     private UUID stationId;
+    private UUID pricingId;
 }

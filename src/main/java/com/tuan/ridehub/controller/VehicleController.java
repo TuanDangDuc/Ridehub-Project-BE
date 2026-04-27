@@ -29,13 +29,11 @@ public class VehicleController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('USER')")
     @GetMapping
     public List<VehicleDtoResponse> getAllVehicles() {
         return vehicleService.getAll();
     }
 
-    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public VehicleDtoResponse getVehicleById(
             @PathVariable UUID id
