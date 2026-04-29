@@ -38,26 +38,5 @@ public class ApplicationConfiguration {
         return new BCryptPasswordEncoder(12);
     }
 
-    @Configuration
-    public class CorsConfig {
 
-        @Bean
-        public WebMvcConfigurer corsConfigurer() {
-            return new WebMvcConfigurer() {
-                @Override
-                public void addCorsMappings(CorsRegistry registry) {
-                    registry.addMapping("/**")
-                            .allowedOrigins(
-                                    "http://localhost:30000",
-                                    "http://localhost:5173",
-                                    "https://api.anhchuno.id.vn",
-                                    "https://anhchuno.id.vn"
-                            )
-                            .allowedMethods("*")
-                            .allowedHeaders("*")
-                            .allowCredentials(true);
-                }
-            };
-        }
-    }
 }
