@@ -26,14 +26,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(request -> {
-                    var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
-                    corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                    corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
-                    corsConfiguration.setAllowCredentials(true);
-                    return corsConfiguration;
-                }))
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> request.requestMatchers(
                                 "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook", "/oauth2/**", "/", "/api/oauth2/**", "/error",
                                 "/api/vehicle/**", "/api/station/**", "/api/pricing/**")
