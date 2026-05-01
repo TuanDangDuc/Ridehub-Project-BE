@@ -50,7 +50,6 @@ public class VehicleController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('USER')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateVehicle(
             @PathVariable UUID id,
