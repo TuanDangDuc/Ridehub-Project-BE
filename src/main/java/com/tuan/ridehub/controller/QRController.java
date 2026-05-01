@@ -18,12 +18,11 @@ public class QRController {
     private final QRService qrService;
 
 
-    @GetMapping(value = "/{id}", produces = MediaType.IMAGE_PNG_VALUE)
+    @GetMapping(value = "/{code}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQRCode(
-            @PathVariable UUID id
+            @PathVariable String code
     ) {
-        String url = "https://api.anhchuno.id.vn/api/vehicle/" + id;
-        byte[] qr = qrService.generateQRCode(url);
+        byte[] qr = qrService.generateQRCode(code);
         return ResponseEntity.ok(qr);
     }
 
