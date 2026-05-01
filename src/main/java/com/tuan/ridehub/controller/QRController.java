@@ -21,9 +21,9 @@ public class QRController {
 
     @GetMapping(value = "/{id}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQRCode(
-            @PathVariable UUID id
+            @PathVariable String code
     ) {
-        String url = "https://api.anhchuno.id.vn/api/vehicle/" + id;
+        String url = "https://api.anhchuno.id.vn/api/vehicle/" + code;
         byte[] qr = qrService.generateQRCode(url);
         return ResponseEntity.ok(qr);
     }
