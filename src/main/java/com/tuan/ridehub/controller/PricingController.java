@@ -19,11 +19,10 @@ public class PricingController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping()
-    public ResponseEntity<?> addPricing(
+    public ResponseEntity<PricingDtoResponse> addPricing(
             @RequestBody PricingDtoRequest request
     ){
-        pricingService.addPricing(request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(pricingService.addPricing(request));
     }
 
     @PreAuthorize("hasRole('USER')")

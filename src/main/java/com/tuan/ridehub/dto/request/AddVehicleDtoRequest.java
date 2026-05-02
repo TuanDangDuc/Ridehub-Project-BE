@@ -21,6 +21,9 @@ public class AddVehicleDtoRequest {
     private Type type;
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+    @Column(columnDefinition = "TEXT")
+    private String qrCodeUrl;
     private UUID pricingId;
     private UUID stationId;
+    private VehicleStatus status;
 }

@@ -20,5 +20,7 @@ public class UpdateVehicleDtoRequest {
     private Type type;
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+    @Column(columnDefinition = "TEXT")
+    private String qrCodeUrl;
     private UUID pricingId;
 }

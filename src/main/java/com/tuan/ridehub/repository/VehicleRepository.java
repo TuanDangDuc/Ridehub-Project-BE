@@ -24,7 +24,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     @Modifying
     @Transactional
-    @Query("update Vehicle v set v.name = :#{#vehicle.name}, v.imageUrl = :#{#vehicle.imageUrl}, v.code = :#{#vehicle.code}, v.type = :#{#vehicle.type}, v.pricing.id = :#{#vehicle.pricing.id} where v.id = :#{#vehicle.id}")
+    @Query("update Vehicle v set v.name = :#{#vehicle.name}, v.imageUrl = :#{#vehicle.imageUrl}, v.qrCodeUrl = :#{#vehicle.qrCodeUrl}, v.code = :#{#vehicle.code}, v.type = :#{#vehicle.type}, v.pricing = :#{#vehicle.pricing} where v.id = :#{#vehicle.id}")
     void updateVehicle(Vehicle vehicle);
 
     @Modifying

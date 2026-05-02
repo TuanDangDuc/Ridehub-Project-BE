@@ -23,8 +23,7 @@ public class VehicleController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> addVehicle(
-            @RequestBody AddVehicleDtoRequest request
-    ) {
+            @RequestBody AddVehicleDtoRequest request) {
         vehicleService.addVehicle(request);
         return ResponseEntity.ok().build();
     }
@@ -36,26 +35,23 @@ public class VehicleController {
 
     @GetMapping("/{id}")
     public VehicleDtoResponse getVehicleById(
-            @PathVariable UUID id
-    ) {
+            @PathVariable UUID id) {
         return vehicleService.getVehicleById(id);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping
     public ResponseEntity<?> updateVehicle(
-            @RequestBody UpdateVehicleDtoRequest request
-    ) {
+            @RequestBody UpdateVehicleDtoRequest request) {
         vehicleService.updateVehicle(request);
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateVehicle(
             @PathVariable UUID id,
-            @RequestParam VehicleStatus status
-    ) {
+            @RequestParam VehicleStatus status) {
         vehicleService.updateStatus(id, status);
         return ResponseEntity.ok().build();
     }
@@ -63,34 +59,29 @@ public class VehicleController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteVehicleById(
-            @PathVariable UUID id
-    ) {
+            @PathVariable UUID id) {
         vehicleService.deleteById(id);
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/station")
     public ResponseEntity<?> updateVehicleStation(
             @PathVariable UUID id,
-            @RequestParam UUID stationId
-    ) {
+            @RequestParam(required = false) UUID stationId) {
         vehicleService.updateVehicleStation(id, stationId);
         return ResponseEntity.ok().build();
     }
 
-
     @GetMapping("/code/{code}")
     public ResponseEntity<VehicleDtoResponse> getAvailableVehiclesByCode(
-            @PathVariable String code
-    ) {
+            @PathVariable String code) {
         return ResponseEntity.ok(vehicleService.getAvailableVehiclesByCode(code));
     }
 
     @GetMapping("/station/{stationId}")
     public ResponseEntity<List<VehicleDtoResponse>> getAllVehiclesByStationId(
-            @PathVariable UUID stationId
-    ) {
+            @PathVariable UUID stationId) {
         return ResponseEntity.ok(vehicleService.getAvailableVehiclesByStationId(stationId));
     }
 }

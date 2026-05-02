@@ -15,6 +15,7 @@ public class VehicleDtoResponse {
     private String code;
     private String type;
     private String imageUrl;
+    private String qrCodeUrl;
     private VehicleStatus status;
     private Double pricePerMinutes;
     private UUID stationId;

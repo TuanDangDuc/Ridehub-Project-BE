@@ -22,15 +22,17 @@ public class VehicleMapper {
             AddVehicleDtoRequest request
     ) {
         Pricing pricing = pricingRepository.getReferenceById(request.getPricingId());
-        Station station = stationRepository.getReferenceById(request.getStationId());
+        Station station = request.getStationId() != null ? stationRepository.getReferenceById(request.getStationId()) : null;
         return Vehicle.builder()
                 .name(request.getName())
                 .code(request.getCode())
                 .type(request.getType())
                 .imageUrl(request.getImageUrl())
-                .status(VehicleStatus.AVAILABLE)
+                .qrCodeUrl(request.getQrCodeUrl())
+                .status(request.getStatus() != null ? request.getStatus() : VehicleStatus.AVAILABLE)
                 .pricing(pricing)
                 .station(station)
+
                 .build();
     }
 
@@ -43,6 +45,7 @@ public class VehicleMapper {
                 .code(vehicle.getCode())
                 .type(vehicle.getType().toString())
                 .imageUrl(vehicle.getImageUrl())
+                .qrCodeUrl(vehicle.getQrCodeUrl())
                 .status(vehicle.getStatus())
                 .pricePerMinutes(vehicle.getPricing().getPricePerMinutes())
                 .stationId(vehicle.getStation().getId())
@@ -60,6 +63,7 @@ public class VehicleMapper {
                 .code(request.getCode())
                 .type(request.getType())
                 .imageUrl(request.getImageUrl())
+                .qrCodeUrl(request.getQrCodeUrl())
                 .pricing(pricing)
                 .build();
     }

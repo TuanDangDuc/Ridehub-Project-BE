@@ -16,8 +16,8 @@ public class PricingService {
     private final PricingRepository pricingRepository;
     private final PricingMapper pricingMapper;
 
-    public void addPricing(PricingDtoRequest request) {
-        pricingRepository.save(pricingMapper.PricingDtoRequestToPricing(request));
+    public PricingDtoResponse addPricing(PricingDtoRequest request) {
+        return pricingMapper.PricingtoPricingDtoResponse(pricingRepository.save(pricingMapper.PricingDtoRequestToPricing(request)));
     }
 
     public List<PricingDtoResponse> getAll() {
