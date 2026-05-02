@@ -68,6 +68,7 @@ public class UserMapper {
                 .status(users.getStatus())
                 .createdAt(users.getCreatedAt())
                 .role(users.getRole())
+                .balance(users.getBalance())
                 .build();
     }
 }

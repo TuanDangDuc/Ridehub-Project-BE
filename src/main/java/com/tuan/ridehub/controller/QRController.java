@@ -17,6 +17,7 @@ import java.util.UUID;
 public class QRController {
     private final QRService qrService;
 
+
     @GetMapping(value = "/{code}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQRCode(
             @PathVariable String code) {
