@@ -19,7 +19,8 @@ public class CorsConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://anhchuno.id.vn"
+                "https://anhchuno.id.vn",
+                "http://localhost:8989"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
