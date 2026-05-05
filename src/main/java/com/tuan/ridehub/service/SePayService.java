@@ -61,11 +61,37 @@ public class SePayService {
             userId = extractUserId(webhook.getDescription());
         }
 
-        // Nếu không trích xuất được UUID, thử tra cứu từ Mapping (Trường hợp SePay Gateway ghi đè nội dung)
+        // Nếu không trích xuất được UUID, thử tra cứu từ Mapping cục bộ
         if (userId == null && webhook.getCode() != null) {
             userId = orderUserMapping.get(webhook.getCode());
-            if (userId != null) {
-                log.info("Found User ID {} from Mapping for code {}", userId, webhook.getCode());
+        }
+
+        // CHIÊU CUỐI: Nếu vẫn không thấy, dùng API Token để hỏi trực tiếp SePay
+        if (userId == null && webhook.getCode() != null) {
+            try {
+                log.info("Proactively looking up transaction {} from SePay API...", webhook.getCode());
+                org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+                org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+                headers.set("Authorization", "Bearer 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO");
+                org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>(headers);
+
+                // Tìm trong danh sách giao dịch của SePay
+                String url = "https://my.sepay.vn/userapi/transactions/list?code=" + webhook.getCode();
+                org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, java.util.Map.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    java.util.List<java.util.Map<String, Object>> txs = (java.util.List) response.getBody().get("transactions");
+                    if (txs != null && !txs.isEmpty()) {
+                        // Lấy mô tả (description) hoặc nội dung (transaction_content) để tìm UUID
+                        String remoteContent = (String) txs.get(0).get("transaction_content");
+                        userId = extractUserId(remoteContent);
+                        if (userId != null) {
+                            log.info("Found User ID {} from SePay Remote Transaction Content", userId);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to lookup transaction from SePay API: {}", e.getMessage());
             }
         }
 
