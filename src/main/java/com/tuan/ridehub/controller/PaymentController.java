@@ -70,7 +70,7 @@ public class PaymentController {
         html.append("<html><head><title>Redirecting to SePay...</title></head>");
         html.append("<body onload='document.forms[0].submit()'>");
         html.append("<h3>Đang chuyển hướng tới cổng thanh toán SePay...</h3>");
-        html.append("<form action='https://pay.sepay.vn/v1/init' method='POST'>");
+        html.append("<form action='https://pay.sepay.vn/checkout' method='POST'>");
         fields.forEach((k, v) -> {
             html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
         });
