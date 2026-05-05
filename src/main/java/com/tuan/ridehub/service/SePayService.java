@@ -26,49 +26,36 @@ public class SePayService {
 
     @Transactional
     public void processWebhook(SePayWebhookDto webhook) {
-        log.info("=== SePay Payment Gateway IPN Received ===");
-        log.info("Notification Type: {}", webhook.getNotificationType());
+        if (webhook.isBankWebhook()) {
+            processBankWebhook(webhook);
+        } else {
+            processGatewayIPN(webhook);
+        }
+    }
 
-        // Check notification type
-        if (!"ORDER_PAID".equals(webhook.getNotificationType())) {
-            log.warn("Ignoring notification type: {} (only 'ORDER_PAID' is processed)", webhook.getNotificationType());
+    /// Xử lý webhook từ SePay Bank Monitoring (flat JSON)
+    private void processBankWebhook(SePayWebhookDto webhook) {
+        log.info("=== SePay Bank Webhook Received ===");
+        log.info("Gateway: {}, Amount: {}, Content: {}", webhook.getGateway(), webhook.getTransferAmount(), webhook.getContent());
+
+        if (!"in".equalsIgnoreCase(webhook.getTransferType())) {
+            log.warn("Ignoring transfer type: {}", webhook.getTransferType());
             return;
         }
 
-        SePayWebhookDto.SePayOrder order = webhook.getOrder();
-        SePayWebhookDto.SePayTransaction transaction = webhook.getTransaction();
-
-        if (order == null || transaction == null) {
-            log.error("Missing order or transaction data in webhook!");
+        if (webhook.getTransferAmount() == null || webhook.getTransferAmount() <= 0) {
+            log.error("Invalid transfer amount: {}", webhook.getTransferAmount());
             return;
         }
 
-        // Check order status
-        if (!"CAPTURED".equals(order.getOrderStatus()) && !"APPROVED".equals(transaction.getTransactionStatus())) {
-            log.warn("Order not captured or approved yet. Status: Order={}, Trans={}", 
-                    order.getOrderStatus(), transaction.getTransactionStatus());
-            return;
-        }
+        Double amount = webhook.getTransferAmount().doubleValue();
 
-        log.info("Order ID: {}, Amount: {}, Description: {}",
-                order.getOrderId(), order.getOrderAmount(), order.getOrderDescription());
-
-        Double amount = order.getOrderAmount();
-        if (amount == null || amount <= 0) {
-            log.error("Invalid order amount: {}", amount);
-            return;
-        }
-
-        // Extract User ID from order_description or order_invoice_number
-        // Expected format: "NAP CREDIT <UUID>"
-        UUID userId = extractUserId(order.getOrderDescription());
+        UUID userId = extractUserId(webhook.getContent());
         if (userId == null) {
-            userId = extractUserId(order.getOrderInvoiceNumber());
+            userId = extractUserId(webhook.getDescription());
         }
-
         if (userId == null) {
-            log.error("Could not extract User ID from description: '{}' or invoice: '{}'",
-                    order.getOrderDescription(), order.getOrderInvoiceNumber());
+            log.error("Could not extract User ID from content: '{}' or description: '{}'", webhook.getContent(), webhook.getDescription());
             return;
         }
 
@@ -78,14 +65,71 @@ public class SePayService {
             return;
         }
 
-        // Check for duplicate transaction
-        boolean exists = paymentRepository.existsByResponseDataContaining("sepay_tx=" + transaction.getId());
+        // Chống trùng
+        boolean exists = paymentRepository.existsByResponseDataContaining("sepay_id=" + webhook.getId());
         if (exists) {
-            log.warn("Transaction already processed: SePay Transaction ID {}", transaction.getId());
+            log.warn("Transaction already processed: SePay ID {}", webhook.getId());
             return;
         }
 
-        // Create Payment record
+        Payment payment = Payment.builder()
+                .amount(amount)
+                .paymentMethod("SEPAY_" + (webhook.getGateway() != null ? webhook.getGateway() : "BANK"))
+                .paymentStatus(PaymentStatus.PAID)
+                .user(user)
+                .responseData("sepay_id=" + webhook.getId() + ", ref=" + webhook.getReferenceCode())
+                .build();
+
+        paymentRepository.save(payment);
+        userService.addCredit(userId, amount);
+        log.info("Successfully added {} credit to user {} ({})", amount, userId, user.getUsername());
+    }
+
+    /// Xử lý IPN từ SePay Payment Gateway (nested JSON)
+    private void processGatewayIPN(SePayWebhookDto webhook) {
+        log.info("=== SePay Payment Gateway IPN Received ===");
+        log.info("Notification Type: {}", webhook.getNotificationType());
+
+        if (!"ORDER_PAID".equals(webhook.getNotificationType())) {
+            log.warn("Ignoring notification type: {}", webhook.getNotificationType());
+            return;
+        }
+
+        SePayWebhookDto.SePayOrder order = webhook.getOrder();
+        SePayWebhookDto.SePayTransaction transaction = webhook.getTransaction();
+
+        if (order == null || transaction == null) {
+            log.error("Missing order or transaction data!");
+            return;
+        }
+
+        Double amount = order.getOrderAmount();
+        if (amount == null || amount <= 0) {
+            log.error("Invalid order amount: {}", amount);
+            return;
+        }
+
+        UUID userId = extractUserId(order.getOrderDescription());
+        if (userId == null) {
+            userId = extractUserId(order.getOrderInvoiceNumber());
+        }
+        if (userId == null) {
+            log.error("Could not extract User ID from description: '{}' or invoice: '{}'", order.getOrderDescription(), order.getOrderInvoiceNumber());
+            return;
+        }
+
+        Users user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            log.error("User not found with ID: {}", userId);
+            return;
+        }
+
+        boolean exists = paymentRepository.existsByResponseDataContaining("sepay_tx=" + transaction.getId());
+        if (exists) {
+            log.warn("Transaction already processed: {}", transaction.getId());
+            return;
+        }
+
         Payment payment = Payment.builder()
                 .amount(amount)
                 .paymentMethod("SEPAY_" + (transaction.getPaymentMethod() != null ? transaction.getPaymentMethod() : "GATEWAY"))
@@ -95,21 +139,14 @@ public class SePayService {
                 .build();
 
         paymentRepository.save(payment);
-
-        // Add credit to user balance
         userService.addCredit(userId, amount);
         log.info("Successfully added {} credit to user {} ({})", amount, userId, user.getUsername());
     }
 
     private UUID extractUserId(String text) {
         if (text == null) return null;
-
-        // Find UUID pattern in text
-        Pattern pattern = Pattern.compile(
-                "([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})",
-                Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(text);
-
         if (matcher.find()) {
             try {
                 return UUID.fromString(matcher.group(1));
