@@ -73,15 +73,15 @@ public class PaymentController {
         fields.put("signature", signature);
 
         try {
-            // Gọi API SePay để khởi tạo giao dịch (Dùng JSON cho chuẩn)
+            // Gọi API SePay để khởi tạo giao dịch (Dùng API Token mày vừa đưa)
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            // Nếu mày có API Key thì thêm vào đây: headers.set("Authorization", "Bearer YOUR_API_KEY");
+            headers.set("Authorization", "Bearer 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO");
 
             org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(fields, headers);
             
-            log.info("Calling SePay API (JSON) to init checkout...");
+            log.info("Calling SePay API with API Token to init checkout...");
             org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
             log.info("SePay Raw Response: {}", response.getBody());
 
