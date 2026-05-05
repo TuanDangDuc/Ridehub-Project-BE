@@ -55,17 +55,10 @@ public class PaymentController {
         String description = userId.toString();
 
         java.util.Map<String, String> fields = new java.util.HashMap<>();
-        fields.put("merchant", merchantId);
-        fields.put("operation", "PURCHASE");
-        fields.put("merchant_id", "SP-LIVE-MA649336"); // THÊM DÒNG NÀY
-        fields.put("order_invoice_number", invoiceNumber);
-        fields.put("order_amount", String.valueOf(amount.intValue()));
-        fields.put("currency", "VND");
-        fields.put("order_description", description);
-        fields.put("success_url", "https://api.anhchuno.id.vn/api/payment/success?u=" + userId);
-        fields.put("error_url", "https://api.anhchuno.id.vn/api/payment/error");
-        fields.put("cancel_url", "https://api.anhchuno.id.vn/api/payment/error");
-        fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
+        fields.put("merchant", "SP-LIVE-MA649336");
+        fields.put("order_id", "RIDEHUB_" + System.currentTimeMillis());
+        fields.put("amount", String.valueOf(amount.intValue()));
+        fields.put("description", userId.toString());
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
@@ -80,7 +73,7 @@ public class PaymentController {
             org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
                     fields, headers);
 
-            log.info("Calling SePay API (PROD) with Merchant ID: {}", fields.get("merchant_id"));
+            log.info("Calling SePay API (PROD) with Merchant ID: {}", fields.get("merchant"));
             org.springframework.http.ResponseEntity<String> response = restTemplate
                     .postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
             log.info("SePay Response Status: {}", response.getStatusCode());
