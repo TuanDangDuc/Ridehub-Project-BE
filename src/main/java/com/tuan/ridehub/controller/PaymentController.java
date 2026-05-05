@@ -108,16 +108,21 @@ public class PaymentController {
             e.printStackTrace();
         }
 
-        // Fallback: Nếu gọi API lỗi thì dùng lại cơ chế Form cũ (nhưng cơ chế này ID có thể bị null như đã thấy)
+        // Fallback: Nếu gọi API SePay Gateway lỗi, dùng QR trực tiếp (qr.sepay.vn) - Cực kỳ tin cậy
+        String qrUrl = String.format("https://qr.sepay.vn/img?acc=00703942085&bank=MBBank&amount=%d&des=%s", 
+                                    amount.intValue(), userId.toString());
+        
         StringBuilder html = new StringBuilder();
-        html.append("<html><head><title>Redirecting to SePay...</title></head>");
-        html.append("<body onload='document.forms[0].submit()'>");
-        html.append("<h3>Đang chuyển hướng tới cổng thanh toán SePay...</h3>");
-        html.append("<form action='https://pay.sepay.vn/v1/checkout/init' method='POST'>");
-        fields.forEach((k, v) -> {
-            html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
-        });
-        html.append("</form></body></html>");
+        html.append("<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán Ridehub</title>");
+        html.append("<style>body{font-family:sans-serif;text-align:center;padding:20px;background:#f4f7f6;}");
+        html.append(".card{background:white;padding:30px;border-radius:20px;display:inline-block;box-shadow:0 10px 30px rgba(0,0,0,0.1);max-width:400px;}");
+        html.append("img{width:100%;border-radius:10px;margin:20px 0;}");
+        html.append("h2{color:#2c3e50;}p{color:#7f8c8d;font-size:14px;}.uuid{background:#eee;padding:5px;border-radius:5px;font-family:monospace;font-weight:bold;color:#e74c3c;}</style></head>");
+        html.append("<body><div class='card'><h2>Quét mã nạp tiền</h2><p>Vui lòng không sửa nội dung chuyển khoản để được cộng tiền tự động.</p>");
+        html.append("<img src='").append(qrUrl).append("' alt='QR Thanh toan'>");
+        html.append("<p>Nội dung: <span class='uuid'>").append(userId.toString()).append("</span></p>");
+        html.append("<p>Số tiền: <b>").append(String.format("%,d", amount.intValue())).append(" VNĐ</b></p>");
+        html.append("<hr><p style='font-size:12px;'>Hệ thống sẽ tự động cộng tiền sau 1-2 phút.</p></div></body></html>");
 
         return ResponseEntity.ok()
                 .header("Content-Type", "text/html; charset=UTF-8")
