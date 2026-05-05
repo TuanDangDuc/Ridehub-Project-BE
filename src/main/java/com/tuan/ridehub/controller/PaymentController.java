@@ -73,24 +73,28 @@ public class PaymentController {
         fields.put("signature", signature);
 
         try {
-            // Gọi API SePay để khởi tạo giao dịch (Dùng API Token mày vừa đưa)
+            // Dùng Secret Key (spsk_live_...) thay vì API Token
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO");
+            headers.set("Authorization", "Bearer spsk_live_9ASo2fMTAwBDpgjqjr8YWMmh9Uw7Jsnh");
 
             org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(fields, headers);
             
-            log.info("Calling SePay API with API Token to init checkout...");
+            log.info("Calling SePay API (PROD) to init checkout...");
             org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
-            log.info("SePay Raw Response: {}", response.getBody());
+            log.info("SePay Response Status: {}", response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 java.util.Map<String, Object> resBody = mapper.readValue(response.getBody(), java.util.Map.class);
                 
                 String checkoutUrl = (String) resBody.get("checkout_url");
-                String sepayOrderId = (String) resBody.get("order_id");
+                // Quan trọng: SePay trả về mã PAY... trong order_id (hoặc id)
+                Object sepayOrderIdObj = resBody.get("order_id");
+                if (sepayOrderIdObj == null) sepayOrderIdObj = resBody.get("id");
+                
+                String sepayOrderId = sepayOrderIdObj != null ? sepayOrderIdObj.toString() : null;
 
                 if (sepayOrderId != null) {
                     log.info("Successfully initiated SePay Order: {}. Mapping to user: {}", sepayOrderId, userId);
@@ -104,29 +108,9 @@ public class PaymentController {
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to init SePay checkout via API: {}", e.getMessage());
-            e.printStackTrace();
+            return ResponseEntity.status(500).body("Lỗi kết nối với cổng thanh toán SePay. Vui lòng thử lại sau!");
         }
-
-        // Fallback: Nếu gọi API SePay Gateway lỗi, dùng QR trực tiếp (qr.sepay.vn) - Cực kỳ tin cậy
-        String qrUrl = String.format("https://qr.sepay.vn/img?acc=00703942085&bank=MBBank&amount=%d&des=%s", 
-                                    amount.intValue(), userId.toString());
-        
-        StringBuilder html = new StringBuilder();
-        html.append("<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán Ridehub</title>");
-        html.append("<style>body{font-family:sans-serif;text-align:center;padding:20px;background:#f4f7f6;}");
-        html.append(".card{background:white;padding:30px;border-radius:20px;display:inline-block;box-shadow:0 10px 30px rgba(0,0,0,0.1);max-width:400px;}");
-        html.append("img{width:100%;border-radius:10px;margin:20px 0;}");
-        html.append("h2{color:#2c3e50;}p{color:#7f8c8d;font-size:14px;}.uuid{background:#eee;padding:5px;border-radius:5px;font-family:monospace;font-weight:bold;color:#e74c3c;}</style></head>");
-        html.append("<body><div class='card'><h2>Quét mã nạp tiền</h2><p>Vui lòng không sửa nội dung chuyển khoản để được cộng tiền tự động.</p>");
-        html.append("<img src='").append(qrUrl).append("' alt='QR Thanh toan'>");
-        html.append("<p>Nội dung: <span class='uuid'>").append(userId.toString()).append("</span></p>");
-        html.append("<p>Số tiền: <b>").append(String.format("%,d", amount.intValue())).append(" VNĐ</b></p>");
-        html.append("<hr><p style='font-size:12px;'>Hệ thống sẽ tự động cộng tiền sau 1-2 phút.</p></div></body></html>");
-
-        return ResponseEntity.ok()
-                .header("Content-Type", "text/html; charset=UTF-8")
-                .body(html.toString());
+        return ResponseEntity.status(500).body("Không thể tạo link thanh toán SePay. Vui lòng thử lại sau!");
     }
 
     @PreAuthorize("hasRole('USER')")

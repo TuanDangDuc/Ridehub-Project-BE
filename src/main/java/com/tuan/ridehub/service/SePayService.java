@@ -82,11 +82,17 @@ public class SePayService {
                 if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                     java.util.List<java.util.Map<String, Object>> txs = (java.util.List) response.getBody().get("transactions");
                     if (txs != null && !txs.isEmpty()) {
-                        // Lấy mô tả (description) hoặc nội dung (transaction_content) để tìm UUID
-                        String remoteContent = (String) txs.get(0).get("transaction_content");
-                        userId = extractUserId(remoteContent);
-                        if (userId != null) {
-                            log.info("Found User ID {} from SePay Remote Transaction Content", userId);
+                        log.info("Found {} transactions in SePay API list. Searching for code: {}", txs.size(), webhook.getCode());
+                        for (java.util.Map<String, Object> tx : txs) {
+                            String remoteCode = (String) tx.get("code");
+                            if (webhook.getCode().equals(remoteCode)) {
+                                String remoteContent = (String) tx.get("transaction_content");
+                                userId = extractUserId(remoteContent);
+                                if (userId != null) {
+                                    log.info("Successfully found User ID {} for transaction {} via proactive API lookup!", userId, remoteCode);
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
