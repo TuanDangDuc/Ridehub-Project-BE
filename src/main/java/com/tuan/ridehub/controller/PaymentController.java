@@ -82,7 +82,6 @@ public class PaymentController {
                     connection.setInstanceFollowRedirects(false); // Cực kỳ quan trọng để bắt được 302
                 }
             };
-            factory.setOutputStreaming(false);
             restTemplate.setRequestFactory(factory);
             
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
