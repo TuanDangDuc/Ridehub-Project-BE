@@ -35,6 +35,9 @@ public class PaymentController {
         log.info("Payload: {}", payload);
 
         // Verify Secret Key
+        log.info("Expected Secret Key length: {}", webhookSecret != null ? webhookSecret.length() : "null");
+        log.info("Received Auth Header: {}", authHeader != null ? "Present (length " + authHeader.length() + ")" : "Missing");
+
         if (authHeader == null || !authHeader.equals("Bearer " + webhookSecret)) {
             log.warn("Unauthorized SePay Webhook attempt with header: {}", authHeader);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"success\": false, \"message\": \"Unauthorized\"}");
