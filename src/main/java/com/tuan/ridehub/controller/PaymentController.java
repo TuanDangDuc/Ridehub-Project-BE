@@ -45,13 +45,13 @@ public class PaymentController {
     public ResponseEntity<String> checkoutRedirect(
             @RequestParam Double amount,
             @RequestParam UUID userId) {
-        
+
         log.info("=== [GATEWAY] Initiate Redirect ===");
         log.info("Amount: {}, UserId: {}", amount, userId);
-        
+
         String invoiceNumber = "TOPUP-" + System.currentTimeMillis();
         String description = "NAP CREDIT " + userId;
-        
+
         java.util.Map<String, String> fields = new java.util.HashMap<>();
         fields.put("merchant", merchantId);
         fields.put("operation", "PURCHASE");
@@ -65,12 +65,12 @@ public class PaymentController {
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
-        
+
         StringBuilder html = new StringBuilder();
         html.append("<html><head><title>Redirecting to SePay...</title></head>");
         html.append("<body onload='document.forms[0].submit()'>");
         html.append("<h3>Đang chuyển hướng tới cổng thanh toán SePay...</h3>");
-        html.append("<form action='https://pay.sepay.vn/checkout' method='POST'>");
+        html.append("<form action='https://pay.sepay.vn/v1/checkout/init' method='POST'>");
         fields.forEach((k, v) -> {
             html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
         });
@@ -106,6 +106,7 @@ public class PaymentController {
     public ResponseEntity<PaymentDtoResponse> failPayment(@PathVariable UUID id) {
         return ResponseEntity.ok(paymentService.failPayment(id));
     }
+
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public ResponseEntity<PaymentDtoResponse> getPaymentById(@PathVariable UUID id) {
