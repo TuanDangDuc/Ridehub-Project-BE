@@ -7,6 +7,7 @@ import com.tuan.ridehub.service.PaymentService;
 import com.tuan.ridehub.service.SePayService;
 import com.tuan.ridehub.service.SePayGatewayService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/payment")
-@lombok.extern.slf4j.Slf4j
+@Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -29,7 +30,7 @@ public class PaymentController {
 
     @PostMapping("/sepay-webhook")
     public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
-        log.info("=== SePay Webhook Received ===");
+        log.info("=== [WEBHOOK] Received SePay IPN ===");
         log.info("Payload: {}", payload);
         try {
             sePayService.processWebhook(payload);
@@ -44,6 +45,9 @@ public class PaymentController {
     public ResponseEntity<String> checkoutRedirect(
             @RequestParam Double amount,
             @RequestParam UUID userId) {
+        
+        log.info("=== [GATEWAY] Initiate Redirect ===");
+        log.info("Amount: {}, UserId: {}", amount, userId);
         
         String invoiceNumber = "TOPUP-" + System.currentTimeMillis();
         String description = "NAP CREDIT " + userId;
@@ -60,9 +64,12 @@ public class PaymentController {
         fields.put("cancel_url", "https://anhchuno.id.vn/payment/cancel");
 
         String signature = sePayGatewayService.generateSignature(fields);
+        log.info("Generated Signature: {}", signature);
         
         StringBuilder html = new StringBuilder();
-        html.append("<html><body onload='document.forms[0].submit()'>");
+        html.append("<html><head><title>Redirecting to SePay...</title></head>");
+        html.append("<body onload='document.forms[0].submit()'>");
+        html.append("<h3>Đang chuyển hướng tới cổng thanh toán SePay...</h3>");
         html.append("<form action='https://pay.sepay.vn/v1/init' method='POST'>");
         fields.forEach((k, v) -> {
             html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
