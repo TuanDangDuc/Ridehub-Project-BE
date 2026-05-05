@@ -152,6 +152,10 @@ public class PaymentController {
                         .header("Content-Type", "text/html; charset=UTF-8")
                         .body(body);
             }
+            
+            // Nếu không thỏa mãn cả 302 và 200, ném lỗi để chạy vào fallback
+            throw new RuntimeException("Unexpected response from SePay: " + response.getStatusCode());
+
         } catch (Exception e) {
             log.error("SEPAY ERROR: {}", e.getMessage(), e);
             // Fallback: Nếu gọi API Server-to-Server bị lỗi (do Cloudflare chặn), dùng lại cơ chế Form gửi từ trình duyệt Client
