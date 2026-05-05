@@ -107,4 +107,11 @@ public class UserController {
     ) {
         return userService.getUserByUsername(username);
     }
+
+    @GetMapping("/balance/{id}")
+    public Double getUserBalance(
+            @PathVariable UUID id
+    ) {
+        return userService.getUserById(id).getBalance();
+    }
 }
