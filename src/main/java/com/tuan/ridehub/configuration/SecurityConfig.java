@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> request.requestMatchers(
-                                "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook", "/api/payment/checkout-redirect", "/oauth2/**", "/", "/api/oauth2/**", "/error",
+                                "/api/user/login", "/api/user/register", "/**/sepay-webhook", "/**/checkout-redirect", "/oauth2/**", "/", "/api/oauth2/**", "/error",
                                 "/api/vehicle/**", "/api/station/**", "/api/pricing/**")
                         .permitAll()
                         .anyRequest()
