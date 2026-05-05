@@ -75,6 +75,11 @@ public class TripService {
         // Tính totalCost = duration * pricePerMinutes
         if (trip.getPricing() != null && trip.getPricing().getPricePerMinutes() != null) {
             trip.setTotalCost(minutes * trip.getPricing().getPricePerMinutes());
+            
+            // Trừ trực tiếp tiền vào ví của User
+            if (trip.getTotalCost() > 0 && trip.getUser() != null) {
+                userRepository.subtractCredit(trip.getUser().getId(), trip.getTotalCost());
+            }
         }
 
         trip.setTripStatus(TripStatus.COMPLETED);
