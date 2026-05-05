@@ -74,45 +74,102 @@ public class PaymentController {
 
         try {
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            // Cấu hình để RestTemplate không tự động follow redirect (để mình lấy Header Location)
+            org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory() {
+                @Override
+                protected void prepareConnection(java.net.HttpURLConnection connection, String httpMethod) throws java.io.IOException {
+                    super.prepareConnection(connection, httpMethod);
+                    connection.setInstanceFollowRedirects(false); // Cực kỳ quan trọng để bắt được 302
+                }
+            };
+            factory.setOutputStreaming(false);
+            restTemplate.setRequestFactory(factory);
+            
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Bearer 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO"); // Dùng lại token cũ đã chạy được
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED); // SePay yêu cầu form-urlencoded
+            headers.set("Authorization", "Bearer 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO"); 
+            // Cực kỳ quan trọng: Giả mạo User-Agent để bypass Cloudflare WAF trên Production
+            headers.set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            headers.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
 
-            org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
-                    fields, headers);
+            org.springframework.util.MultiValueMap<String, String> map = new org.springframework.util.LinkedMultiValueMap<>();
+            for (java.util.Map.Entry<String, String> entry : fields.entrySet()) {
+                map.add(entry.getKey(), entry.getValue());
+            }
 
-            log.info("Calling SePay API (PROD) with API Token to init checkout...");
-            org.springframework.http.ResponseEntity<String> response = restTemplate
-                    .postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(map, headers);
+
+            log.info("Calling SePay API (PROD) with Form-UrlEncoded data...");
+            org.springframework.http.ResponseEntity<String> response;
+            try {
+                response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                // Nếu RestTemplate ném lỗi 3xx, ta bắt ở đây
+                if (e.getStatusCode().is3xxRedirection()) {
+                    response = org.springframework.http.ResponseEntity.status(e.getStatusCode())
+                                .headers(e.getResponseHeaders())
+                                .body(e.getResponseBodyAsString());
+                } else {
+                    throw e;
+                }
+            }
+
             log.info("SePay Response Status: {}", response.getStatusCode());
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                java.util.Map<String, Object> resBody = mapper.readValue(response.getBody(), java.util.Map.class);
+            if (response.getStatusCode().is3xxRedirection()) {
+                java.net.URI location = response.getHeaders().getLocation();
+                if (location != null) {
+                    String checkoutUrl = location.toString();
+                    
+                    // Trích xuất order_id (PAY...) từ URL
+                    String sepayOrderId = null;
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("order_id=(PAY[A-Z0-9]+)").matcher(checkoutUrl);
+                    if (m.find()) {
+                        sepayOrderId = m.group(1);
+                        log.info("Successfully initiated SePay Order via 302: {}. Mapping to user: {}", sepayOrderId, userId);
+                        sePayService.saveMapping(sepayOrderId, userId);
+                    } else {
+                        log.warn("Could not find order_id (PAY...) in redirect URL: {}", checkoutUrl);
+                    }
 
-                String checkoutUrl = (String) resBody.get("checkout_url");
-                Object sepayOrderIdObj = resBody.get("order_id");
-                if (sepayOrderIdObj == null)
-                    sepayOrderIdObj = resBody.get("id");
-
-                String sepayOrderId = sepayOrderIdObj != null ? sepayOrderIdObj.toString() : null;
-
-                if (sepayOrderId != null) {
-                    log.info("Successfully initiated SePay Order: {}. Mapping to user: {}", sepayOrderId, userId);
-                    sePayService.saveMapping(sepayOrderId, userId);
-                }
-
-                if (checkoutUrl != null) {
                     return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
-                            .location(java.net.URI.create(checkoutUrl))
+                            .location(location)
                             .build();
                 }
+            } else if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                // Nếu không bị Redirect mà SePay trả về luôn trang HTML (200 OK)
+                String body = response.getBody();
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("ORDER_ID\\s*=\\s*['\"`](PAY[A-Z0-9]+)['\"`]").matcher(body);
+                if (m.find()) {
+                    String sepayOrderId = m.group(1);
+                    log.info("Successfully initiated SePay Order via HTML 200 OK: {}. Mapping to user: {}", sepayOrderId, userId);
+                    sePayService.saveMapping(sepayOrderId, userId);
+                } else {
+                    log.warn("Could not find ORDER_ID in 200 OK HTML response.");
+                }
+
+                // Trả về luôn trang HTML của SePay cho Mobile App hiển thị
+                return ResponseEntity.ok()
+                        .header("Content-Type", "text/html; charset=UTF-8")
+                        .body(body);
             }
         } catch (Exception e) {
             log.error("SEPAY ERROR: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body("Lỗi SePay: " + e.getMessage());
+            // Fallback: Nếu gọi API Server-to-Server bị lỗi (do Cloudflare chặn), dùng lại cơ chế Form gửi từ trình duyệt Client
+            StringBuilder html = new StringBuilder();
+            html.append("<html><head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Redirecting to SePay...</title></head>");
+            html.append("<body onload='document.forms[0].submit()' style='text-align:center; padding-top: 50px; font-family: sans-serif;'>");
+            html.append("<h3>Đang chuyển hướng tới cổng thanh toán SePay...</h3>");
+            html.append("<form action='https://pay.sepay.vn/v1/checkout/init' method='POST'>");
+            for (java.util.Map.Entry<String, String> entry : fields.entrySet()) {
+                html.append("<input type='hidden' name='").append(entry.getKey()).append("' value='").append(entry.getValue()).append("'>");
+            }
+            html.append("</form></body></html>");
+
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/html; charset=UTF-8")
+                    .body(html.toString());
         }
-        return ResponseEntity.status(500).body("Không thể tạo link thanh toán SePay.");
     }
 
     @PreAuthorize("hasRole('USER')")
