@@ -61,12 +61,12 @@ public class PaymentController {
         fields.put("order_amount", String.valueOf(amount.intValue()));
         fields.put("currency", "VND");
         fields.put("order_description", description);
-        fields.put("success_url", "https://api.anhchuno.id.vn/api/payment/success");
+        fields.put("success_url", "https://api.anhchuno.id.vn/api/payment/success?u=" + userId);
         fields.put("error_url", "https://api.anhchuno.id.vn/api/payment/error");
         fields.put("cancel_url", "https://api.anhchuno.id.vn/api/payment/error");
         fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
         fields.put("ipn_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
-        fields.put("return_url", "https://api.anhchuno.id.vn/api/payment/success");
+        fields.put("return_url", "https://api.anhchuno.id.vn/api/payment/success?u=" + userId);
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
@@ -139,13 +139,21 @@ public class PaymentController {
 
     @GetMapping("/success")
     @ResponseBody
-    public String paymentSuccess() {
+    public String paymentSuccess(@RequestParam(value = "u", required = false) String userId,
+                                @RequestParam(value = "order_id", required = false) String sepayOrderId) {
+        log.info("=== [SUCCESS REDIRECT] Mapping User to SePay Order ===");
+        log.info("User: {}, SePay Order: {}", userId, sepayOrderId);
+        
+        if (userId != null && sepayOrderId != null) {
+            sePayService.saveMapping(sepayOrderId, UUID.fromString(userId));
+        }
+
         return "<html>" +
                 "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán thành công</title>" +
                 "<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f4f7f6;}" +
                 ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}" +
                 "h1{color:#2ecc71;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>" +
-                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đã được xử lý.<br>Vui lòng quay lại ứng dụng Ridehub để kiểm tra số dư.</p>" +
+                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đang được xử lý.<br>Vui lòng đợi trong giây lát để hệ thống cộng tiền.</p>" +
                 "<a href='#' onclick='window.close();' class='btn'>Đóng trình duyệt</a></div>" +
                 "<script>setTimeout(function(){ window.location.href='ridehub://home'; }, 3000);</script></body></html>";
     }

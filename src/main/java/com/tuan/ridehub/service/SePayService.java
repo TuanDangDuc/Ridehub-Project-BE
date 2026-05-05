@@ -23,6 +23,12 @@ public class SePayService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final UserService userService;
+    private final java.util.Map<String, UUID> orderUserMapping = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void saveMapping(String sepayOrderId, UUID userId) {
+        log.info("Saving mapping: {} -> {}", sepayOrderId, userId);
+        orderUserMapping.put(sepayOrderId, userId);
+    }
 
     @Transactional
     public void processWebhook(SePayWebhookDto webhook) {
@@ -53,6 +59,14 @@ public class SePayService {
         UUID userId = extractUserId(webhook.getContent());
         if (userId == null) {
             userId = extractUserId(webhook.getDescription());
+        }
+
+        // Nếu không trích xuất được UUID, thử tra cứu từ Mapping (Trường hợp SePay Gateway ghi đè nội dung)
+        if (userId == null && webhook.getCode() != null) {
+            userId = orderUserMapping.get(webhook.getCode());
+            if (userId != null) {
+                log.info("Found User ID {} from Mapping for code {}", userId, webhook.getCode());
+            }
         }
 
         if (userId == null) {
