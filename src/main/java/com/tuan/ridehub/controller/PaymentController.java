@@ -64,6 +64,7 @@ public class PaymentController {
         fields.put("success_url", "https://anhchuno.id.vn/payment/success");
         fields.put("error_url", "https://anhchuno.id.vn/payment/error");
         fields.put("cancel_url", "https://anhchuno.id.vn/payment/cancel");
+        fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
