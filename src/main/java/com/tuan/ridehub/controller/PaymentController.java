@@ -6,6 +6,8 @@ import com.tuan.ridehub.dto.request.SePayWebhookDto;
 import com.tuan.ridehub.service.PaymentService;
 import com.tuan.ridehub.service.SePayService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +24,22 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final SePayService sePayService;
 
-    @PreAuthorize("hasRole('USER')")
+    @Value("${sepay.webhook-secret}")
+    private String webhookSecret;
+
     @PostMapping("/sepay-webhook")
-    public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
+    public ResponseEntity<?> sePayWebhook(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody SePayWebhookDto payload) {
         log.info("=== SePay IPN Request Received ===");
         log.info("Payload: {}", payload);
+
+        // Verify Secret Key
+        if (authHeader == null || !authHeader.equals("Bearer " + webhookSecret)) {
+            log.warn("Unauthorized SePay Webhook attempt with header: {}", authHeader);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("{\"success\": false, \"message\": \"Unauthorized\"}");
+        }
+
         try {
             sePayService.processWebhook(payload);
             return ResponseEntity.ok().body("{\"success\": true}");

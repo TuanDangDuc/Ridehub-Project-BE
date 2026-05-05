@@ -1,3 +1,6 @@
 spring:
   profiles:
     active: prod
+
+sepay:
+  webhook-secret: 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO

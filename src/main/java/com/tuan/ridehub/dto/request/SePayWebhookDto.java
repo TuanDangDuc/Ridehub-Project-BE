@@ -21,39 +21,23 @@ public class SePayWebhookDto {
 
     private SePayOrder order;
     private SePayTransaction transaction;
-    private Object customer;
-    private Object agreement;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class SePayOrder {
-        private String id;
-
         @JsonProperty("order_id")
         private String orderId;
 
         @JsonProperty("order_status")
         private String orderStatus;
 
-        @JsonProperty("order_currency")
-        private String orderCurrency;
-
         @JsonProperty("order_amount")
-        private Long orderAmount;
+        private Double orderAmount;
 
         @JsonProperty("order_invoice_number")
         private String orderInvoiceNumber;
-
-        @JsonProperty("custom_data")
-        private Object customData;
-
-        @JsonProperty("user_agent")
-        private Object userAgent;
-
-        @JsonProperty("ip_address")
-        private String ipAddress;
 
         @JsonProperty("order_description")
         private String orderDescription;
@@ -72,9 +56,6 @@ public class SePayWebhookDto {
         @JsonProperty("transaction_id")
         private String transactionId;
 
-        @JsonProperty("transaction_type")
-        private String transactionType;
-
         @JsonProperty("transaction_date")
         private String transactionDate;
 
@@ -82,27 +63,6 @@ public class SePayWebhookDto {
         private String transactionStatus;
 
         @JsonProperty("transaction_amount")
-        private Long transactionAmount;
-
-        @JsonProperty("transaction_currency")
-        private String transactionCurrency;
-
-        @JsonProperty("authentication_status")
-        private String authenticationStatus;
-
-        @JsonProperty("card_number")
-        private String cardNumber;
-
-        @JsonProperty("card_holder_name")
-        private String cardHolderName;
-
-        @JsonProperty("card_expiry")
-        private String cardExpiry;
-
-        @JsonProperty("card_funding_method")
-        private String cardFundingMethod;
-
-        @JsonProperty("card_brand")
-        private String cardBrand;
+        private Double transactionAmount;
     }
 }
