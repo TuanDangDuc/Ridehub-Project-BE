@@ -52,8 +52,8 @@ public class PaymentController {
         log.info("Amount: {}, UserId: {}", amount, userId);
 
         String invoiceNumber = "TOPUP-" + System.currentTimeMillis();
-        String description = "NAP CREDIT " + userId;
-
+        String description = userId.toString();
+        
         java.util.Map<String, String> fields = new java.util.HashMap<>();
         fields.put("merchant", merchantId);
         fields.put("operation", "PURCHASE");
@@ -65,6 +65,8 @@ public class PaymentController {
         fields.put("error_url", "https://anhchuno.id.vn/payment/error");
         fields.put("cancel_url", "https://anhchuno.id.vn/payment/cancel");
         fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
+        fields.put("ipn_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
+        fields.put("return_url", "https://anhchuno.id.vn/payment/success");
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
