@@ -29,10 +29,12 @@ public class PaymentController {
     private String merchantId;
 
     @PostMapping("/sepay-webhook")
-    public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
-        log.info("=== [WEBHOOK] Received SePay IPN ===");
-        log.info("Payload: {}", payload);
+    public ResponseEntity<?> sePayWebhook(@RequestBody String rawPayload) {
+        log.info("=== [WEBHOOK] RAW PAYLOAD RECEIVED ===");
+        log.info("Payload: {}", rawPayload);
         try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            SePayWebhookDto payload = mapper.readValue(rawPayload, SePayWebhookDto.class);
             sePayService.processWebhook(payload);
             return ResponseEntity.ok().body("{\"success\": true}");
         } catch (Exception e) {
