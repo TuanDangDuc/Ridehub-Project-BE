@@ -113,4 +113,8 @@ public class UserService {
     public UserDtopResponse getUserByUsername(String username) {
         return userMapper.UserToUserDtoResponse(userRepository.getUserByUsername(username));
     }
+
+    public void minusBalanceById(UUID id, Double minusBalance) {
+        userRepository.minusBalanceById(id, minusBalance);
+    }
 }

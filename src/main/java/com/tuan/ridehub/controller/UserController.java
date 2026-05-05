@@ -114,4 +114,13 @@ public class UserController {
     ) {
         return userService.getUserById(id).getBalance();
     }
+
+    @PatchMapping("/{id}/minusBalance/{minusBalance}")
+    public ResponseEntity<?> minusBalance(
+            @PathVariable UUID id,
+            @PathVariable Double minusBalance
+    ) {
+        userService.minusBalanceById(id, minusBalance);
+        return ResponseEntity.ok().build();
+    }
 }
