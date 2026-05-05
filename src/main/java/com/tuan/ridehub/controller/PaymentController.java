@@ -61,12 +61,12 @@ public class PaymentController {
         fields.put("order_amount", String.valueOf(amount.intValue()));
         fields.put("currency", "VND");
         fields.put("order_description", description);
-        fields.put("success_url", "https://anhchuno.id.vn/payment/success");
-        fields.put("error_url", "https://anhchuno.id.vn/payment/error");
-        fields.put("cancel_url", "https://anhchuno.id.vn/payment/cancel");
+        fields.put("success_url", "https://api.anhchuno.id.vn/api/payment/success");
+        fields.put("error_url", "https://api.anhchuno.id.vn/api/payment/error");
+        fields.put("cancel_url", "https://api.anhchuno.id.vn/api/payment/error");
         fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
         fields.put("ipn_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
-        fields.put("return_url", "https://anhchuno.id.vn/payment/success");
+        fields.put("return_url", "https://api.anhchuno.id.vn/api/payment/success");
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
@@ -135,5 +135,31 @@ public class PaymentController {
     public ResponseEntity<?> deletePayment(@PathVariable UUID id) {
         paymentService.deletePayment(id);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/success")
+    @ResponseBody
+    public String paymentSuccess() {
+        return "<html>" +
+                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán thành công</title>" +
+                "<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f4f7f6;}" +
+                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}" +
+                "h1{color:#2ecc71;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>" +
+                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đã được xử lý.<br>Vui lòng quay lại ứng dụng Ridehub để kiểm tra số dư.</p>" +
+                "<a href='#' onclick='window.close();' class='btn'>Đóng trình duyệt</a></div>" +
+                "<script>setTimeout(function(){ window.location.href='ridehub://home'; }, 3000);</script></body></html>";
+    }
+
+    @GetMapping("/error")
+    @ResponseBody
+    public String paymentError() {
+        return "<html>" +
+                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Lỗi thanh toán</title>" +
+                "<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f4f7f6;}" +
+                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}" +
+                "h1{color:#e74c3c;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>" +
+                "<body><div class='card'><h1>✘ Thất bại</h1><p>Đã có lỗi xảy ra trong quá trình thanh toán.<br>Vui lòng thử lại sau.</p>" +
+                "<a href='#' onclick='window.close();' class='btn'>Quay lại</a></div>" +
+                "</body></html>";
     }
 }
