@@ -27,7 +27,9 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
         System.out.println("PATH: " + path);
-        if (path.equals("/api/payment/sepay-webhook") || path.startsWith("/oauth2/")) {
+        if (path.equals("/api/payment/sepay-webhook") || 
+            path.equals("/api/payment/checkout-redirect") ||
+            path.startsWith("/oauth2/")) {
             filterChain.doFilter(request, response);
             return;
         }

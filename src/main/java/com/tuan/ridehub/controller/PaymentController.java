@@ -40,9 +40,8 @@ public class PaymentController {
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
-    @PostMapping("/initiate-topup")
-    public ResponseEntity<com.tuan.ridehub.dto.response.SePayCheckoutResponse> initiateTopup(
+    @GetMapping("/checkout-redirect")
+    public ResponseEntity<String> checkoutRedirect(
             @RequestParam Double amount,
             @RequestParam UUID userId) {
         
@@ -53,7 +52,7 @@ public class PaymentController {
         fields.put("merchant", merchantId);
         fields.put("operation", "PURCHASE");
         fields.put("order_invoice_number", invoiceNumber);
-        fields.put("order_amount", String.valueOf(amount.intValue())); // SePay thường dùng số nguyên
+        fields.put("order_amount", String.valueOf(amount.intValue()));
         fields.put("currency", "VND");
         fields.put("order_description", description);
         fields.put("success_url", "https://anhchuno.id.vn/payment/success");
@@ -62,19 +61,18 @@ public class PaymentController {
 
         String signature = sePayGatewayService.generateSignature(fields);
         
-        return ResponseEntity.ok(com.tuan.ridehub.dto.response.SePayCheckoutResponse.builder()
-                .checkoutUrl("https://pay.sepay.vn/v1/init")
-                .merchant(merchantId)
-                .operation("PURCHASE")
-                .orderInvoiceNumber(invoiceNumber)
-                .orderAmount(String.valueOf(amount.intValue()))
-                .currency("VND")
-                .orderDescription(description)
-                .successUrl(fields.get("success_url"))
-                .errorUrl(fields.get("error_url"))
-                .cancelUrl(fields.get("cancel_url"))
-                .signature(signature)
-                .build());
+        StringBuilder html = new StringBuilder();
+        html.append("<html><body onload='document.forms[0].submit()'>");
+        html.append("<form action='https://pay.sepay.vn/v1/init' method='POST'>");
+        fields.forEach((k, v) -> {
+            html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
+        });
+        html.append("<input type='hidden' name='signature' value='").append(signature).append("'>");
+        html.append("</form></body></html>");
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html.toString());
     }
 
     @PreAuthorize("hasRole('USER')")
