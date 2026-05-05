@@ -26,9 +26,50 @@ public class SePayService {
 
     @Transactional
     public void processWebhook(SePayWebhookDto webhook) {
-        log.info("=== SePay Payment Gateway IPN Received ===");
-        log.info("Notification Type: {}", webhook.getNotificationType());
+        if (webhook.isBankWebhook()) {
+            processBankWebhook(webhook);
+        } else {
+            processGatewayIPN(webhook);
+        }
+    }
 
+    /**
+     * Xử lý Webhook từ SePay Bank Monitoring (Dạng phẳng)
+     * Thường dùng khi user chuyển khoản thủ công hoặc biến động số dư.
+     */
+    private void processBankWebhook(SePayWebhookDto webhook) {
+        log.info("=== SePay Bank Webhook (Flat) Received ===");
+        log.info("Gateway: {}, Amount: {}, Content: {}", webhook.getGateway(), webhook.getTransferAmount(), webhook.getContent());
+
+        if (!"in".equalsIgnoreCase(webhook.getTransferType())) {
+            log.warn("Ignoring OUT transfer type");
+            return;
+        }
+
+        Double amount = (webhook.getTransferAmount() != null) ? webhook.getTransferAmount().doubleValue() : 0.0;
+        if (amount <= 0) return;
+
+        // Ưu tiên trích xuất từ Content (nội dung chuyển khoản)
+        UUID userId = extractUserId(webhook.getContent());
+        if (userId == null) {
+            userId = extractUserId(webhook.getDescription());
+        }
+
+        if (userId == null) {
+            log.error("Could not extract User ID from Bank Webhook content: '{}'", webhook.getContent());
+            return;
+        }
+
+        processCredit(userId, amount, "sepay_bank_id=" + webhook.getId(), "SEPAY_BANK");
+    }
+
+    /**
+     * Xử lý IPN từ SePay Payment Gateway (Dạng lồng nhau)
+     * Thường dùng khi user thực hiện qua luồng Checkout/Redirect.
+     */
+    private void processGatewayIPN(SePayWebhookDto webhook) {
+        log.info("=== SePay Payment Gateway IPN (Nested) Received ===");
+        
         if (!"ORDER_PAID".equals(webhook.getNotificationType())) {
             log.warn("Ignoring notification type: {}", webhook.getNotificationType());
             return;
@@ -37,60 +78,50 @@ public class SePayService {
         SePayWebhookDto.SePayOrder order = webhook.getOrder();
         SePayWebhookDto.SePayTransaction transaction = webhook.getTransaction();
 
-        if (order == null || transaction == null) {
-            log.error("Missing order or transaction data!");
-            return;
-        }
+        if (order == null || transaction == null) return;
 
-        // 1. Kiểm tra trạng thái đơn hàng từ SePay
-        if (!"CAPTURED".equals(order.getOrderStatus())) {
-            log.warn("Order status is not CAPTURED: {}", order.getOrderStatus());
-            return;
-        }
+        if (!"CAPTURED".equals(order.getOrderStatus())) return;
 
         Double amount = order.getOrderAmount();
-        if (amount == null || amount <= 0) {
-            log.error("Invalid order amount: {}", amount);
-            return;
-        }
-
-        // 2. Trích xuất User ID từ mô tả đơn hàng (format: NAP CREDIT <UUID>)
         UUID userId = extractUserId(order.getOrderDescription());
+        
         if (userId == null) {
             userId = extractUserId(order.getOrderInvoiceNumber());
         }
-        
+
         if (userId == null) {
-            log.error("Could not extract User ID from description: '{}' or invoice: '{}'", order.getOrderDescription(), order.getOrderInvoiceNumber());
+            log.error("Could not extract User ID from Gateway IPN");
             return;
         }
 
+        processCredit(userId, amount, "sepay_tx=" + transaction.getId(), "SEPAY_GATEWAY");
+    }
+
+    private void processCredit(UUID userId, Double amount, String uniqueId, String method) {
         Users user = userRepository.findById(userId).orElse(null);
         if (user == null) {
-            log.error("User not found with ID: {}", userId);
+            log.error("User not found: {}", userId);
             return;
         }
 
-        // 3. Chống trùng giao dịch (Idempotency)
-        boolean exists = paymentRepository.existsByResponseDataContaining("sepay_tx=" + transaction.getId());
-        if (exists) {
-            log.warn("Transaction already processed: {}", transaction.getId());
+        // Chống trùng
+        if (paymentRepository.existsByResponseDataContaining(uniqueId)) {
+            log.warn("Transaction already processed: {}", uniqueId);
             return;
         }
 
-        // 4. Lưu thông tin thanh toán và cộng tiền
         Payment payment = Payment.builder()
                 .amount(amount)
-                .paymentMethod("SEPAY_GATEWAY")
+                .paymentMethod(method)
                 .paymentStatus(PaymentStatus.PAID)
                 .user(user)
-                .responseData("sepay_tx=" + transaction.getId() + ", order_id=" + order.getOrderId() + ", invoice=" + order.getOrderInvoiceNumber())
+                .responseData(uniqueId)
                 .build();
 
         paymentRepository.save(payment);
         userService.addCredit(userId, amount);
         
-        log.info("Successfully added {} credit to user {} ({}) from SePay Gateway", amount, userId, user.getUsername());
+        log.info("Successfully added {} to user {} via {}", amount, user.getUsername(), method);
     }
 
     private UUID extractUserId(String text) {

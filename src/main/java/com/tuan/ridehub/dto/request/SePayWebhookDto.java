@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SePayWebhookDto {
 
+    // === Payment Gateway IPN fields (nested) ===
     private Long timestamp;
 
     @JsonProperty("notification_type")
@@ -21,9 +22,28 @@ public class SePayWebhookDto {
 
     private SePayOrder order;
     private SePayTransaction transaction;
+
+    // === Bank Monitoring Webhook fields (flat) ===
+    // Dựa trên tài liệu "Webhooks đơn giản" mày vừa gửi
+    private Long id;
+    private String gateway;
+    private String accountNumber;
+    private String code;
+    private String content;
+    private String transferType;
+    private Long transferAmount;
+    private Long accumulated;
+    private String subAccount;
+    private String referenceCode;
+    private String description;
+    private String transactionDate;
     
-    // Signature gửi kèm trong Webhook để verify
     private String signature;
+
+    /// Kiểm tra xem đây có phải là webhook dạng phẳng (Bank Monitoring) không
+    public boolean isBankWebhook() {
+        return transferType != null || gateway != null;
+    }
 
     @Data
     @NoArgsConstructor
