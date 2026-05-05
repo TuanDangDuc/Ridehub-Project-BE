@@ -73,21 +73,22 @@ public class PaymentController {
         fields.put("signature", signature);
 
         try {
-            // Gọi API SePay để khởi tạo giao dịch (Server-to-Server)
+            // Gọi API SePay để khởi tạo giao dịch (Dùng JSON cho chuẩn)
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+            // Nếu mày có API Key thì thêm vào đây: headers.set("Authorization", "Bearer YOUR_API_KEY");
 
-            org.springframework.util.MultiValueMap<String, String> map = new org.springframework.util.LinkedMultiValueMap<>();
-            fields.forEach(map::add);
-
-            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(map, headers);
+            org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(fields, headers);
             
-            log.info("Calling SePay API to init checkout...");
-            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, java.util.Map.class);
+            log.info("Calling SePay API (JSON) to init checkout...");
+            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
+            log.info("SePay Raw Response: {}", response.getBody());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                java.util.Map<String, Object> resBody = response.getBody();
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, Object> resBody = mapper.readValue(response.getBody(), java.util.Map.class);
+                
                 String checkoutUrl = (String) resBody.get("checkout_url");
                 String sepayOrderId = (String) resBody.get("order_id");
 
@@ -102,9 +103,9 @@ public class PaymentController {
                             .build();
                 }
             }
-            log.error("SePay API Error: {}", response.getBody());
         } catch (Exception e) {
             log.error("Failed to init SePay checkout via API: {}", e.getMessage());
+            e.printStackTrace();
         }
 
         // Fallback: Nếu gọi API lỗi thì dùng lại cơ chế Form cũ (nhưng cơ chế này ID có thể bị null như đã thấy)
