@@ -53,10 +53,11 @@ public class PaymentController {
 
         String invoiceNumber = "TOPUP-" + System.currentTimeMillis();
         String description = userId.toString();
-        
+
         java.util.Map<String, String> fields = new java.util.HashMap<>();
         fields.put("merchant", merchantId);
         fields.put("operation", "PURCHASE");
+        fields.put("merchant_id", "SP-LIVE-MA649336"); // THÊM DÒNG NÀY
         fields.put("order_invoice_number", invoiceNumber);
         fields.put("order_amount", String.valueOf(amount.intValue()));
         fields.put("currency", "VND");
@@ -65,35 +66,34 @@ public class PaymentController {
         fields.put("error_url", "https://api.anhchuno.id.vn/api/payment/error");
         fields.put("cancel_url", "https://api.anhchuno.id.vn/api/payment/error");
         fields.put("webhook_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
-        fields.put("ipn_url", "https://api.anhchuno.id.vn/api/payment/sepay-webhook");
-        fields.put("return_url", "https://api.anhchuno.id.vn/api/payment/success?u=" + userId);
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
         fields.put("signature", signature);
 
         try {
-            // Dùng Secret Key (spsk_live_...) thay vì API Token
             org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
             headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer spsk_live_9ASo2fMTAwBDpgjqjr8YWMmh9Uw7Jsnh");
 
-            org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(fields, headers);
-            
-            log.info("Calling SePay API (PROD) to init checkout...");
-            org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
+            org.springframework.http.HttpEntity<java.util.Map<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(
+                    fields, headers);
+
+            log.info("Calling SePay API (PROD) with Merchant ID: {}", fields.get("merchant_id"));
+            org.springframework.http.ResponseEntity<String> response = restTemplate
+                    .postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, String.class);
             log.info("SePay Response Status: {}", response.getStatusCode());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 java.util.Map<String, Object> resBody = mapper.readValue(response.getBody(), java.util.Map.class);
-                
+
                 String checkoutUrl = (String) resBody.get("checkout_url");
-                // Quan trọng: SePay trả về mã PAY... trong order_id (hoặc id)
                 Object sepayOrderIdObj = resBody.get("order_id");
-                if (sepayOrderIdObj == null) sepayOrderIdObj = resBody.get("id");
-                
+                if (sepayOrderIdObj == null)
+                    sepayOrderIdObj = resBody.get("id");
+
                 String sepayOrderId = sepayOrderIdObj != null ? sepayOrderIdObj.toString() : null;
 
                 if (sepayOrderId != null) {
@@ -108,9 +108,10 @@ public class PaymentController {
                 }
             }
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Lỗi kết nối với cổng thanh toán SePay. Vui lòng thử lại sau!");
+            log.error("SEPAY ERROR: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body("Lỗi SePay: " + e.getMessage());
         }
-        return ResponseEntity.status(500).body("Không thể tạo link thanh toán SePay. Vui lòng thử lại sau!");
+        return ResponseEntity.status(500).body("Không thể tạo link thanh toán SePay.");
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -166,20 +167,24 @@ public class PaymentController {
     @GetMapping("/success")
     @ResponseBody
     public String paymentSuccess(@RequestParam(value = "u", required = false) String userId,
-                                @RequestParam(value = "order_id", required = false) String sepayOrderId) {
+            @RequestParam(value = "order_id", required = false) String sepayOrderId) {
         log.info("=== [SUCCESS REDIRECT] Mapping User to SePay Order ===");
         log.info("User: {}, SePay Order: {}", userId, sepayOrderId);
-        
+
         if (userId != null && sepayOrderId != null) {
             sePayService.saveMapping(sepayOrderId, UUID.fromString(userId));
         }
 
         return "<html>" +
-                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán thành công</title>" +
+                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Thanh toán thành công</title>"
+                +
                 "<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f4f7f6;}" +
-                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}" +
-                "h1{color:#2ecc71;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>" +
-                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đang được xử lý.<br>Vui lòng đợi trong giây lát để hệ thống cộng tiền.</p>" +
+                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}"
+                +
+                "h1{color:#2ecc71;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>"
+                +
+                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đang được xử lý.<br>Vui lòng đợi trong giây lát để hệ thống cộng tiền.</p>"
+                +
                 "<a href='#' onclick='window.close();' class='btn'>Đóng trình duyệt</a></div>" +
                 "<script>setTimeout(function(){ window.location.href='ridehub://home'; }, 3000);</script></body></html>";
     }
@@ -188,11 +193,15 @@ public class PaymentController {
     @ResponseBody
     public String paymentError() {
         return "<html>" +
-                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Lỗi thanh toán</title>" +
+                "<head><meta name='viewport' content='width=device-width, initial-scale=1'><title>Lỗi thanh toán</title>"
+                +
                 "<style>body{font-family:sans-serif;text-align:center;padding-top:50px;background:#f4f7f6;}" +
-                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}" +
-                "h1{color:#e74c3c;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>" +
-                "<body><div class='card'><h1>✘ Thất bại</h1><p>Đã có lỗi xảy ra trong quá trình thanh toán.<br>Vui lòng thử lại sau.</p>" +
+                ".card{background:white;padding:40px;border-radius:15px;display:inline-block;box-shadow:0 4px 15px rgba(0,0,0,0.1);}"
+                +
+                "h1{color:#e74c3c;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>"
+                +
+                "<body><div class='card'><h1>✘ Thất bại</h1><p>Đã có lỗi xảy ra trong quá trình thanh toán.<br>Vui lòng thử lại sau.</p>"
+                +
                 "<a href='#' onclick='window.close();' class='btn'>Quay lại</a></div>" +
                 "</body></html>";
     }
