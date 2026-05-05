@@ -13,32 +13,33 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-    private final JwtFilter jwtFilter;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+        private final JwtFilter jwtFilter;
+        private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(request -> request.requestMatchers(
-                                "/api/user/login", "/api/user/register", "/**/sepay-webhook", "/**/checkout-redirect", "/oauth2/**", "/", "/api/oauth2/**", "/error",
-                                "/api/vehicle/**", "/api/station/**", "/api/pricing/**")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated())
-                .oauth2Login(oauth -> oauth
-                        .successHandler(oAuth2SuccessHandler))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+                http
+                                .csrf(AbstractHttpConfigurer::disable)
+                                .cors(Customizer.withDefaults())
+                                .authorizeHttpRequests(request -> request.requestMatchers(
+                                                "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook",
+                                                "/api/payment/checkout-redirect", "/api/payment/success", "/api/payment/error", "/oauth2/**", "/", "/api/oauth2/**",
+                                                "/error",
+                                                "/api/vehicle/**", "/api/station/**", "/api/pricing/**")
+                                                .permitAll()
+                                                .anyRequest()
+                                                .authenticated())
+                                .oauth2Login(oauth -> oauth
+                                                .successHandler(oAuth2SuccessHandler))
+                                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        return http.build();
-    }
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                return http.build();
+        }
 }

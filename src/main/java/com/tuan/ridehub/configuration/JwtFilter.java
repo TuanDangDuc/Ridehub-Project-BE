@@ -30,6 +30,8 @@ public class JwtFilter extends OncePerRequestFilter {
         System.out.println("PATH: " + path);
         if (path.contains("/sepay-webhook") ||
                 path.contains("/checkout-redirect") ||
+                path.contains("/success") ||
+                path.contains("/error") ||
                 path.startsWith("/oauth2/")) {
             filterChain.doFilter(request, response);
             return;
