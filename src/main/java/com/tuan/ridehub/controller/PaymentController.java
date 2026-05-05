@@ -21,6 +21,10 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final SePayService sePayService;
+    private final SePayGatewayService sePayGatewayService;
+
+    @org.springframework.beans.factory.annotation.Value("${sepay.merchant-id}")
+    private String merchantId;
 
     @PostMapping("/sepay-webhook")
     public ResponseEntity<?> sePayWebhook(@RequestBody SePayWebhookDto payload) {
@@ -33,6 +37,43 @@ public class PaymentController {
             log.error("Error processing SePay webhook: {}", e.getMessage(), e);
             return ResponseEntity.ok().body("{\"success\": false}");
         }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/initiate-topup")
+    public ResponseEntity<com.tuan.ridehub.dto.response.SePayCheckoutResponse> initiateTopup(
+            @RequestParam Double amount,
+            @RequestParam UUID userId) {
+        
+        String invoiceNumber = "TOPUP-" + System.currentTimeMillis();
+        String description = "NAP CREDIT " + userId;
+        
+        java.util.Map<String, String> fields = new java.util.HashMap<>();
+        fields.put("merchant", merchantId);
+        fields.put("operation", "PURCHASE");
+        fields.put("order_invoice_number", invoiceNumber);
+        fields.put("order_amount", String.valueOf(amount.intValue())); // SePay thường dùng số nguyên
+        fields.put("currency", "VND");
+        fields.put("order_description", description);
+        fields.put("success_url", "https://anhchuno.id.vn/payment/success");
+        fields.put("error_url", "https://anhchuno.id.vn/payment/error");
+        fields.put("cancel_url", "https://anhchuno.id.vn/payment/cancel");
+
+        String signature = sePayGatewayService.generateSignature(fields);
+        
+        return ResponseEntity.ok(com.tuan.ridehub.dto.response.SePayCheckoutResponse.builder()
+                .checkoutUrl("https://pay.sepay.vn/v1/init")
+                .merchant(merchantId)
+                .operation("PURCHASE")
+                .orderInvoiceNumber(invoiceNumber)
+                .orderAmount(String.valueOf(amount.intValue()))
+                .currency("VND")
+                .orderDescription(description)
+                .successUrl(fields.get("success_url"))
+                .errorUrl(fields.get("error_url"))
+                .cancelUrl(fields.get("cancel_url"))
+                .signature(signature)
+                .build());
     }
 
     @PreAuthorize("hasRole('USER')")

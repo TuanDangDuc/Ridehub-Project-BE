@@ -4,3 +4,5 @@ spring:
 
 sepay:
   webhook-secret: 8EGFQ6TTGHVRYXBZHJKK8Y4STWZFK3XQ4AXP0CIKJOWOD3VNBG7NCVD1JLS1BFIO
+  merchant-id: SP-LIVE-MA649336
+  secret-key: spsk_live_9ASo2fMTAwBDpgjqjr8YWMmh9Uw7Jsnh
