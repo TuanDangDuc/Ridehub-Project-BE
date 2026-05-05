@@ -70,7 +70,44 @@ public class PaymentController {
 
         String signature = sePayGatewayService.generateSignature(fields);
         log.info("Generated Signature: {}", signature);
+        fields.put("signature", signature);
 
+        try {
+            // Gọi API SePay để khởi tạo giao dịch (Server-to-Server)
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
+
+            org.springframework.util.MultiValueMap<String, String> map = new org.springframework.util.LinkedMultiValueMap<>();
+            fields.forEach(map::add);
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> requestEntity = new org.springframework.http.HttpEntity<>(map, headers);
+            
+            log.info("Calling SePay API to init checkout...");
+            org.springframework.http.ResponseEntity<java.util.Map> response = restTemplate.postForEntity("https://pay.sepay.vn/v1/checkout/init", requestEntity, java.util.Map.class);
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                java.util.Map<String, Object> resBody = response.getBody();
+                String checkoutUrl = (String) resBody.get("checkout_url");
+                String sepayOrderId = (String) resBody.get("order_id");
+
+                if (sepayOrderId != null) {
+                    log.info("Successfully initiated SePay Order: {}. Mapping to user: {}", sepayOrderId, userId);
+                    sePayService.saveMapping(sepayOrderId, userId);
+                }
+
+                if (checkoutUrl != null) {
+                    return ResponseEntity.status(org.springframework.http.HttpStatus.FOUND)
+                            .location(java.net.URI.create(checkoutUrl))
+                            .build();
+                }
+            }
+            log.error("SePay API Error: {}", response.getBody());
+        } catch (Exception e) {
+            log.error("Failed to init SePay checkout via API: {}", e.getMessage());
+        }
+
+        // Fallback: Nếu gọi API lỗi thì dùng lại cơ chế Form cũ (nhưng cơ chế này ID có thể bị null như đã thấy)
         StringBuilder html = new StringBuilder();
         html.append("<html><head><title>Redirecting to SePay...</title></head>");
         html.append("<body onload='document.forms[0].submit()'>");
@@ -79,7 +116,6 @@ public class PaymentController {
         fields.forEach((k, v) -> {
             html.append("<input type='hidden' name='").append(k).append("' value='").append(v).append("'>");
         });
-        html.append("<input type='hidden' name='signature' value='").append(signature).append("'>");
         html.append("</form></body></html>");
 
         return ResponseEntity.ok()
