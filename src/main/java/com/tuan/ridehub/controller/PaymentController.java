@@ -244,7 +244,9 @@ public class PaymentController {
                 +
                 "h1{color:#2ecc71;}p{color:#7f8c8d;}.btn{display:inline-block;margin-top:20px;padding:12px 25px;background:#3498db;color:white;text-decoration:none;border-radius:5px;font-weight:bold;}</style></head>"
                 +
-                "<body><div class='card'><h1>✔ Thành công!</h1><p>Giao dịch của bạn đang được xử lý.<br>Vui lòng đợi trong giây lát để hệ thống cộng tiền.</p>"
+                "<body><div class='card'>" +
+                "<div style='width: 80px; height: 80px; background: linear-gradient(135deg, #2196F3, #00BCD4); border-radius: 20px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; font-weight: bold; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);'>Rh</div>" +
+                "<h1>✔ Thành công!</h1><p>Giao dịch của bạn đang được xử lý.<br>Vui lòng đợi trong giây lát để hệ thống cộng tiền.</p>"
                 +
                 "<a href='#' onclick='window.close();' class='btn'>Đóng trình duyệt</a></div>" +
                 "<script>setTimeout(function(){ window.location.href='ridehub://home'; }, 3000);</script></body></html>";
