@@ -40,6 +40,33 @@ public class UserController {
         return authService.login(request);
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody com.tuan.ridehub.dto.request.ForgotPasswordRequest request) {
+        String result = authService.forgotPassword(request.getEmail());
+        if (result.equals("Email không tồn tại")) {
+            return ResponseEntity.badRequest().body(result);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody com.tuan.ridehub.dto.request.VerifyOtpRequest request) {
+        String result = authService.verifyOtp(request.getEmail(), request.getOtp());
+        if (result.equals("Mã OTP không hợp lệ hoặc đã hết hạn")) {
+            return ResponseEntity.badRequest().body(result);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody com.tuan.ridehub.dto.request.ResetPasswordRequest request) {
+        String result = authService.resetPassword(request.getEmail(), request.getNewPassword());
+        if (result.equals("Email không tồn tại")) {
+            return ResponseEntity.badRequest().body(result);
+        }
+        return ResponseEntity.ok(result);
+    }
+
     @PreAuthorize("hasRole('USER')")
     @PutMapping
     public ResponseEntity<?> updateUserInfo(

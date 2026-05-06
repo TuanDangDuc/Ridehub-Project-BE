@@ -55,6 +55,11 @@ public interface UserRepository extends JpaRepository<Users, UUID> {
     @Query("update Users a set a.password = ?2 where a.id = ?1")
     void changePassword(Users users);
 
+    @Modifying
+    @Transactional
+    @Query("update Users a set a.password = ?2 where a.email = ?1")
+    void resetPassword(String email, String encodedPassword);
+
     @Query("select a from Users a")
     List<Users> getAllUser();
 
