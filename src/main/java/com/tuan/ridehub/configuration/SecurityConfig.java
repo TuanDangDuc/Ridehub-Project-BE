@@ -28,6 +28,7 @@ public class SecurityConfig {
                                 .cors(Customizer.withDefaults())
                                 .authorizeHttpRequests(request -> request.requestMatchers(
                                                 "/api/user/login", "/api/user/register", "/api/payment/sepay-webhook",
+                                                "/api/user/forgot-password", "/api/user/verify-otp", "/api/user/reset-password",
                                                 "/api/payment/checkout-redirect", "/api/payment/success", "/api/payment/error", "/oauth2/**", "/", "/api/oauth2/**",
                                                 "/error",
                                                 "/api/vehicle/**", "/api/station/**", "/api/pricing/**")
